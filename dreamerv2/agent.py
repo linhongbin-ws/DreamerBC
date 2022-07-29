@@ -7,7 +7,7 @@ import expl
 
 class Agent(common.Module):
 
-  def __init__(self, config, obs_space, act_space, step):
+  def __init__(self, config, obs_space, act_space, step, **kwargs):
     self.config = config
     self.obs_space = obs_space
     self.act_space = act_space['action']
@@ -18,9 +18,14 @@ class Agent(common.Module):
     if config.expl_behavior == 'greedy':
       self._expl_behavior = self._task_behavior
     else:
-      self._expl_behavior = getattr(expl, config.expl_behavior)(
-          self.config, self.act_space, self.wm, self.tfstep,
-          lambda seq: self.wm.heads['reward'](seq['feat']).mode())
+      if config.expl_behavior == 'Oracle':
+        self._expl_behavior = getattr(expl, config.expl_behavior)(
+            self.config, self.act_space, self.wm, self.tfstep,
+            lambda seq: self.wm.heads['reward'](seq['feat']).mode(), env=kwargs['env'])
+      else:
+        self._expl_behavior = getattr(expl, config.expl_behavior)(
+            self.config, self.act_space, self.wm, self.tfstep,
+            lambda seq: self.wm.heads['reward'](seq['feat']).mode())
 
   @tf.function
   def policy(self, obs, state=None, mode='train'):

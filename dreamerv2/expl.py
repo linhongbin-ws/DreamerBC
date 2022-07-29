@@ -21,6 +21,29 @@ class Random(common.Module):
 
   def train(self, start, context, data):
     return None, {}
+  
+class Oracle(common.Module):
+
+  def __init__(self, config, act_space, wm, tfstep, reward, env):
+    self.config = config
+    self.act_space = self.act_space
+    self.env = env
+
+  def actor(self, feat):
+    _action = self._env.get_oracle_action()
+    print(_action)
+    shape = feat.shape[:-1] + self.act_space.shape
+    if self.config.actor.dist == 'onehot':
+      _probs = tf.zeros(shape)
+      _probs[..., _action] = 1
+      print(_probs)
+      return common.OneHotDist(probs=_probs)
+    else:
+      dist = tfd.Normal(tf.ones(_action)*_action, 0)
+      return tfd.Independent(dist, 1)
+
+  def train(self, start, context, data):
+    return None, {}
 
 
 class Plan2Explore(common.Module):

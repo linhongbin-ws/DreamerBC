@@ -90,12 +90,15 @@ def train(env, config, outputs=None):
   prefill = max(0, config.prefill - replay.stats['total_steps'])
   if prefill:
     print(f'Prefill dataset ({prefill} steps).')
-    random_agent = common.RandomAgent(env.act_space)
+    if config.prefill_agent == 'random':
+      random_agent = common.RandomAgent(env.act_space)
+    elif config.prefill_agent == 'oracle':
+      random_agent = common.OracleAgent(env.act_space, env=env)
     driver(random_agent, steps=prefill, episodes=1)
     driver.reset()
 
   print('Create agent.')
-  agnt = agent.Agent(config, env.obs_space, env.act_space, step)
+  agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
   dataset = iter(replay.dataset(**config.dataset))
   train_agent = common.CarryOverState(agnt.train)
   train_agent(next(dataset))

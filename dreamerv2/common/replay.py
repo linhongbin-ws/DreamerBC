@@ -139,6 +139,7 @@ def save_episode(directory, episode):
   identifier = str(uuid.uuid4().hex)
   length = eplen(episode)
   filename = directory / f'{timestamp}-{identifier}-{length}.npz'
+  print("save to ", filename)
   with io.BytesIO() as f1:
     np.savez_compressed(f1, **episode)
     f1.seek(0)

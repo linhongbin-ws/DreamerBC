@@ -5,3 +5,7 @@ dist
 MUJOCO_LOG.TXT
 
 log/
+
+data/
+
+bash/usr/user_var.sh
