@@ -2,7 +2,7 @@ from gym_suture.envs.wrapper import make_env
 import dreamerv2.api as dv2
 
 config = dv2.defaults.update({
-  'logdir': './data/ambf_np',
+  'logdir': './data/ambf_np_green',
   'log_every': 1e3,
   'train_every': 2,
   'loss_scales.kl': 1.0,
@@ -17,8 +17,8 @@ config = dv2.defaults.update({
   'clip_rewards': 'identity',
   'pred_discount': False,
   'grad_heads': ['decoder', 'reward'],
-  'rssm': {'hidden': 1024, 'deter': 1024, 'stoch': 32, 'discrete': 32},
-  'model_opt.lr': 3e-4,
+  'rssm': {'hidden': 500, 'deter': 500, 'stoch': 200, 'discrete': 200},
+  'model_opt.lr': 1e-4,
   'actor_opt.lr': 8e-5,
   'critic_opt.lr': 8e-5,
   'actor_ent': 1e-4,
