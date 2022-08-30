@@ -9,3 +9,5 @@ log/
 data/
 
 bash/usr/user_var.sh
+
+.vscode/

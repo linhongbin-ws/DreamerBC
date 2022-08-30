@@ -29,6 +29,7 @@ defaults:
   log_keys_max: '^$'
   precision: 16
   jit: True
+  offline_step: 20000000
 
   # Agent
   clip_rewards: tanh

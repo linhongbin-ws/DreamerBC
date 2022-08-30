@@ -151,7 +151,7 @@ def save_episode(directory, episode):
 def load_episodes(directory, capacity=None, minlen=1):
   # The returned directory from filenames to episodes is guaranteed to be in
   # temporally sorted order.
-  filenames = sorted(directory.glob('*.npz'))
+  filenames = sorted(directory.glob('**/*.npz'))
   if capacity:
     num_steps = 0
     num_episodes = 0

@@ -25,6 +25,7 @@ from common import RenderImage
 from common import TerminalOutput
 from common import JSONLOutput
 from common import TensorBoardOutput
+from tqdm import tqdm
 
 configs = yaml.safe_load(
     (pathlib.Path(__file__).parent / 'configs.yaml').read_text())
@@ -35,18 +36,20 @@ for gpu in tf.config.experimental.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(gpu, True)
 
 
-def train(env, config, outputs=None):
+def train(env, config, outputs=None, is_train=True):
 
   logdir = pathlib.Path(config.logdir).expanduser()
   logdir.mkdir(parents=True, exist_ok=True)
+  offlinelogdir = logdir / 'offline' if is_train else logdir
+  offlinelogdir.mkdir(parents=True, exist_ok=True)
   config.save(logdir / 'config.yaml')
   print(config, '\n')
   print('Logdir', logdir)
 
   outputs = outputs or [
       common.TerminalOutput(),
-      common.JSONLOutput(config.logdir),
-      common.TensorBoardOutput(config.logdir),
+      common.JSONLOutput(str(offlinelogdir)),
+      common.TensorBoardOutput(str(offlinelogdir)),
   ]
   replay = common.Replay(logdir / 'train_episodes', **config.replay)
   step = common.Counter(replay.stats['total_steps'])
@@ -85,21 +88,24 @@ def train(env, config, outputs=None):
     env = common.NormalizeAction(env)
   env = common.TimeLimit(env, config.time_limit)
 
-  driver = common.Driver([env])
-  driver.on_episode(per_episode)
-  driver.on_step(lambda tran, worker: step.increment())
-  driver.on_step(replay.add_step)
-  driver.on_reset(replay.add_step)
+  if not is_train:
+    replay = common.Replay(logdir / 'train_episodes' / config.prefill_agent, **config.replay)
+    driver = common.Driver([env])
+    driver.on_episode(per_episode)
+    driver.on_step(lambda tran, worker: step.increment())
+    driver.on_step(replay.add_step)
+    driver.on_reset(replay.add_step)
 
-  prefill = max(0, config.prefill - replay.stats['total_steps'])
-  if prefill:
-    print(f'Prefill dataset ({prefill} steps).')
-    if config.prefill_agent == 'random':
-      random_agent = common.RandomAgent(env.act_space)
-    elif config.prefill_agent == 'oracle':
-      random_agent = common.OracleAgent(env.act_space, env=env)
-    driver(random_agent, steps=prefill, episodes=1)
-    driver.reset()
+    prefill = max(0, config.prefill - replay.stats['total_steps'])
+    if prefill:
+      print(f'Prefill dataset ({prefill} steps).')
+      if config.prefill_agent == 'random':
+        random_agent = common.RandomAgent(env.act_space)
+      elif config.prefill_agent == 'oracle':
+        random_agent = common.OracleAgent(env.act_space, env=env)
+      driver(random_agent, steps=prefill, episodes=1)
+      driver.reset()
+    replay = common.Replay(logdir / 'train_episodes' , **config.replay)
 
   print('Create agent.')
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
@@ -109,26 +115,48 @@ def train(env, config, outputs=None):
   if (logdir / 'variables.pkl').exists():
     agnt.load(logdir / 'variables.pkl')
   else:
-    print('Pretrain agent.')
-    for _ in range(config.pretrain):
-      train_agent(next(dataset))
+    pass
+    # if is_train:
+    #   print('Pretrain agent.')
+    #   for _ in range(config.pretrain):
+    #     train_agent(next(dataset))
   policy = lambda *args: agnt.policy(
       *args, mode='explore' if should_expl(step) else 'train')
 
-  def train_step(tran, worker):
-    if should_train(step):
-      for _ in range(config.train_steps):
-        mets = train_agent(next(dataset))
-        [metrics[key].append(value) for key, value in mets.items()]
-    if should_log(step):
-      for name, values in metrics.items():
-        logger.scalar(name, np.array(values, np.float64).mean())
-        metrics[name].clear()
+  # def train_step(tran, worker):
+  #   if should_train(step):
+  #     for _ in range(config.train_steps):
+  #       mets = train_agent(next(dataset))
+  #       [metrics[key].append(value) for key, value in mets.items()]
+  #   if should_log(step):
+  #     for name, values in metrics.items():
+  #       logger.scalar(name, np.array(values, np.float64).mean())
+  #       metrics[name].clear()
+  #     logger.add(agnt.report(next(dataset)))
+  #     logger.write(fps=True)
+  # driver.on_step(train_step)
+
+  if is_train:
+    for _s in tqdm(range(config.offline_step)):
+      mets = train_agent(next(dataset))
+      [metrics[key].append(value) for key, value in mets.items()]
+      if should_log(_s):
+        for name, values in metrics.items():
+          logger.scalar(name, np.array(values, np.float64).mean())
+          metrics[name].clear()
+        logger.add(agnt.report(next(dataset)))
+        logger.write(fps=True)
+        agnt.save(logdir / 'variables.pkl')
+        print("save param")
+        replay = common.Replay(logdir / 'train_episodes', **config.replay)
+        dataset = iter(replay.dataset(**config.dataset))
+        print("update dataset")
+  else:
+    while step < config.steps:
+      # logger.write()
+      driver(policy, steps=config.eval_every)
       logger.add(agnt.report(next(dataset)))
       logger.write(fps=True)
-  driver.on_step(train_step)
+      print("reload param")
+      agnt.load(logdir / 'variables.pkl')
 
-  while step < config.steps:
-    logger.write()
-    driver(policy, steps=config.eval_every)
-    agnt.save(logdir / 'variables.pkl')
