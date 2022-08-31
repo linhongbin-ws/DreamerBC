@@ -21,7 +21,7 @@ config = dv2.defaults.update({
   'grad_heads': ['decoder', 'reward'],
   'rssm': {'hidden': 200, 'deter': 200, 'stoch': 32, 'discrete': 32},
   'model_opt.lr': 1e-4,
-  'actor_opt.lr': 1e-7,
+  'actor_opt.lr': 4e-6,
   'actor_opt.clip': 1e2,
   'critic_opt.lr': 2e-4,
   'actor_ent': 1e-4,
@@ -29,7 +29,7 @@ config = dv2.defaults.update({
   'prefill': 1000,
   'prefill_agent': 'oracle',
   'time_limit': 50,
-  'replay': {'capacity': 2e6, 'ongoing': False, 'minlen': 16, 'maxlen': 50, 'prioritize_ends': False},
+  'replay': {'capacity': 2e6, 'ongoing': False, 'minlen': 16, 'maxlen': 50, 'prioritize_ends': True},
   'dataset': {'batch': 16, 'length': 17},
   'jit': True,
 }).parse_flags()

@@ -146,10 +146,11 @@ def train(env, config, outputs=None, is_train=True):
   # driver.on_step(train_step)
 
   if is_train:
-    for _s in tqdm(range(config.offline_step)):
+    pbar = tqdm(range(config.offline_step))
+    for _s in pbar:
       step.increment()
       mets = train_agent(next(dataset), next(bc_dataset))
-      print(mets['actor_loss'].numpy())
+      pbar.set_description(f"actor pure loss: {mets['actor_pure_loss'].numpy()}, actor bc loss: {mets['actor_bc_loss'].numpy()}")
       # _ = agnt.report(next(dataset))
       [metrics[key].append(value) for key, value in mets.items()]
       if should_log(step):

@@ -264,7 +264,8 @@ class ActorCritic(common.Module):
       mets1 = {f'reward_{k}': v for k, v in mets1.items()}
       target, mets2 = self.target(seq)
       # if bc_data is None:
-      #   actor_loss, mets3 = self.actor_loss(seq, target)
+      actor_loss, mets3 = self.actor_loss(seq, target)
+      mets3['actor_pure_loss'] = actor_loss
       # else:
       data = world_model.preprocess(bc_data)
       embed = world_model.encoder(data)
@@ -273,9 +274,8 @@ class ActorCritic(common.Module):
       feat = world_model.rssm.get_feat(post)
       action = self.actor(tf.stop_gradient(feat))
       like = -tf.cast(action.log_prob(data['action']), tf.float32).mean()
-      actor_loss =like
-      print(actor_loss)
-      mets3 = {}
+      actor_loss += like
+      mets3['actor_bc_loss'] = like
         
     with tf.GradientTape() as critic_tape:
       critic_loss, mets4 = self.critic_loss(seq, target)
