@@ -30,6 +30,7 @@ defaults:
   precision: 16
   jit: True
   offline_step: 20000000
+  istrain: False
 
   # Agent
   clip_rewards: tanh
@@ -66,6 +67,7 @@ defaults:
   slow_target_fraction: 1
   slow_baseline: True
   reward_norm: {momentum: 1.0, scale: 1.0, eps: 1e-8}
+
 
   # Exploration
   expl_intr_scale: 1.0

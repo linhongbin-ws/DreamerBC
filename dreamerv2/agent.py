@@ -60,14 +60,14 @@ class Agent(common.Module):
     return outputs, state
 
   @tf.function
-  def train(self, data, state=None):
+  def train(self, data,  bc_data=None, state=None,):
     metrics = {}
     state, outputs, mets = self.wm.train(data, state)
     metrics.update(mets)
     start = outputs['post']
     reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
     metrics.update(self._task_behavior.train(
-        self.wm, start, data['is_terminal'], reward))
+        self.wm, start, data['is_terminal'], reward, bc_data))
     if self.config.expl_behavior != 'greedy':
       mets = self._expl_behavior.train(start, outputs, data)[-1]
       metrics.update({'expl_' + key: value for key, value in mets.items()})
@@ -81,6 +81,24 @@ class Agent(common.Module):
       name = key.replace('/', '_')
       report[f'openl_{name}'] = self.wm.video_pred(data, key)
     return report
+  
+  def save_sep(self, dir):
+    dir.mkdir(parents=True, exist_ok=True)
+    print(f"save to {str(dir)}")
+    self.wm.save(dir / 'wm.pkl')
+    self._task_behavior.save(dir / 'policy.pkl')
+  
+  def load_sep(self, dir):
+    _file = dir / 'wm.pkl'
+    if _file.exists():
+      self.wm.load(_file)
+      print(f"load {str(_file)}")
+      
+    _file = dir / 'policy.pkl'
+    if _file.exists():
+      self._task_behavior.load(_file)   
+      print(f"load {str(_file)}")
+
 
 
 class WorldModel(common.Module):
@@ -231,7 +249,7 @@ class ActorCritic(common.Module):
     self.critic_opt = common.Optimizer('critic', **self.config.critic_opt)
     self.rewnorm = common.StreamNorm(**self.config.reward_norm)
 
-  def train(self, world_model, start, is_terminal, reward_fn):
+  def train(self, world_model, start, is_terminal, reward_fn, bc_data):
     metrics = {}
     hor = self.config.imag_horizon
     # The weights are is_terminal flags for the imagination start states.
@@ -245,7 +263,20 @@ class ActorCritic(common.Module):
       seq['reward'], mets1 = self.rewnorm(reward)
       mets1 = {f'reward_{k}': v for k, v in mets1.items()}
       target, mets2 = self.target(seq)
-      actor_loss, mets3 = self.actor_loss(seq, target)
+      # if bc_data is None:
+      #   actor_loss, mets3 = self.actor_loss(seq, target)
+      # else:
+      data = world_model.preprocess(bc_data)
+      embed = world_model.encoder(data)
+      state = None
+      post, prior = world_model.rssm.observe(embed, data['action'], data['is_first'], state)
+      feat = world_model.rssm.get_feat(post)
+      action = self.actor(tf.stop_gradient(feat))
+      like = -tf.cast(action.log_prob(data['action']), tf.float32).mean()
+      actor_loss =like
+      print(actor_loss)
+      mets3 = {}
+        
     with tf.GradientTape() as critic_tape:
       critic_loss, mets4 = self.critic_loss(seq, target)
     metrics.update(self.actor_opt(actor_tape, actor_loss, self.actor))

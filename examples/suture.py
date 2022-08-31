@@ -1,8 +1,10 @@
 from gym_suture.envs.wrapper import make_env
 import dreamerv2.api as dv2
+import argparse
+
 
 config = dv2.defaults.update({
-  'logdir': './data/ambf_np_green_debug',
+  'logdir': './data/ambf_np_green_async',
   'log_every': 1e3,
   'train_every': 2,
   'loss_scales.kl': 1.0,
@@ -17,21 +19,25 @@ config = dv2.defaults.update({
   'clip_rewards': 'identity',
   'pred_discount': False,
   'grad_heads': ['decoder', 'reward'],
-  'rssm': {'hidden': 500, 'deter': 500, 'stoch': 32, 'discrete': 32},
+  'rssm': {'hidden': 200, 'deter': 200, 'stoch': 32, 'discrete': 32},
   'model_opt.lr': 1e-4,
-  'actor_opt.lr': 8e-5,
-  'critic_opt.lr': 8e-5,
+  'actor_opt.lr': 1e-7,
+  'actor_opt.clip': 1e2,
+  'critic_opt.lr': 2e-4,
   'actor_ent': 1e-4,
   'kl.free': 1.0,
-  'prefill': 50,
+  'prefill': 1000,
   'prefill_agent': 'oracle',
   'time_limit': 50,
   'replay': {'capacity': 2e6, 'ongoing': False, 'minlen': 16, 'maxlen': 50, 'prioritize_ends': False},
   'dataset': {'batch': 16, 'length': 17},
-  'jit': False,
+  'jit': True,
 }).parse_flags()
 
+
+
+
 env = make_env("ambf_needle_picking_64x64_discrete")
-dv2.train(env, config, is_train=False)
+dv2.train(env, config, is_train=config.istrain)
 
 env.close()

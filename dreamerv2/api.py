@@ -37,7 +37,7 @@ for gpu in tf.config.experimental.list_physical_devices('GPU'):
 
 
 def train(env, config, outputs=None, is_train=True):
-
+  tf.config.experimental_run_functions_eagerly(not config.jit)
   logdir = pathlib.Path(config.logdir).expanduser()
   logdir.mkdir(parents=True, exist_ok=True)
   offlinelogdir = logdir / 'offline' if is_train else logdir
@@ -106,16 +106,25 @@ def train(env, config, outputs=None, is_train=True):
       driver(random_agent, steps=prefill, episodes=1)
       driver.reset()
     replay = common.Replay(logdir / 'train_episodes' , **config.replay)
+    driver = common.Driver([env])
+    driver.on_episode(per_episode)
+    driver.on_step(lambda tran, worker: step.increment())
+    driver.on_step(replay.add_step)
+    driver.on_reset(replay.add_step)
 
   print('Create agent.')
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
   dataset = iter(replay.dataset(**config.dataset))
+  bc_replay = common.Replay(logdir / 'train_episodes' / 'oracle', **config.replay)
+  bc_dataset = iter(bc_replay.dataset(**config.dataset))
   train_agent = common.CarryOverState(agnt.train)
-  train_agent(next(dataset))
-  if (logdir / 'variables.pkl').exists():
-    agnt.load(logdir / 'variables.pkl')
-  else:
-    pass
+  train_agent(next(dataset), next(bc_dataset))
+  agnt.load_sep(logdir)
+  # if (logdir / 'variables.pkl').exists():
+  #   print(f"load {str(logdir)}")
+  #   agnt.load(logdir / 'variables.pkl')
+  # else:
+  #   pass
     # if is_train:
     #   print('Pretrain agent.')
     #   for _ in range(config.pretrain):
@@ -138,15 +147,19 @@ def train(env, config, outputs=None, is_train=True):
 
   if is_train:
     for _s in tqdm(range(config.offline_step)):
-      mets = train_agent(next(dataset))
+      step.increment()
+      mets = train_agent(next(dataset), next(bc_dataset))
+      print(mets['actor_loss'].numpy())
+      # _ = agnt.report(next(dataset))
       [metrics[key].append(value) for key, value in mets.items()]
-      if should_log(_s):
+      if should_log(step):
         for name, values in metrics.items():
           logger.scalar(name, np.array(values, np.float64).mean())
           metrics[name].clear()
         logger.add(agnt.report(next(dataset)))
         logger.write(fps=True)
-        agnt.save(logdir / 'variables.pkl')
+        # agnt.save(logdir / 'variables.pkl')
+        agnt.save_sep(logdir)
         print("save param")
         replay = common.Replay(logdir / 'train_episodes', **config.replay)
         dataset = iter(replay.dataset(**config.dataset))
@@ -158,5 +171,6 @@ def train(env, config, outputs=None, is_train=True):
       logger.add(agnt.report(next(dataset)))
       logger.write(fps=True)
       print("reload param")
-      agnt.load(logdir / 'variables.pkl')
+      # agnt.load(logdir / 'variables.pkl')
+      agnt.load_sep(logdir)
 
