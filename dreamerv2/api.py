@@ -36,7 +36,7 @@ for gpu in tf.config.experimental.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(gpu, True)
 
 
-def train(env, config, outputs=None, is_train=True):
+def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
   tf.config.experimental_run_functions_eagerly(not config.jit)
   logdir = pathlib.Path(config.logdir).expanduser()
   logdir.mkdir(parents=True, exist_ok=True)
@@ -80,13 +80,14 @@ def train(env, config, outputs=None, is_train=True):
     logger.add(replay.stats)
     logger.write()
 
-  env = common.GymWrapper(env)
-  env = common.ResizeImage(env)
-  if hasattr(env.act_space['action'], 'n'):
-    env = common.OneHotAction(env)
-  else:
-    env = common.NormalizeAction(env)
-  env = common.TimeLimit(env, config.time_limit)
+  if skip_gym_wrap:
+    env = common.GymWrapper(env)
+    env = common.ResizeImage(env)
+    if hasattr(env.act_space['action'], 'n'):
+      env = common.OneHotAction(env)
+    else:
+      env = common.NormalizeAction(env)
+    env = common.TimeLimit(env, config.time_limit)
 
   if not is_train:
     replay = common.Replay(logdir / 'train_episodes' / config.prefill_agent, **config.replay)

@@ -267,15 +267,16 @@ class ActorCritic(common.Module):
       actor_loss, mets3 = self.actor_loss(seq, target)
       mets3['actor_pure_loss'] = actor_loss
       # else:
-      data = world_model.preprocess(bc_data)
-      embed = world_model.encoder(data)
-      state = None
-      post, prior = world_model.rssm.observe(embed, data['action'], data['is_first'], state)
-      feat = world_model.rssm.get_feat(post)
-      action = self.actor(tf.stop_gradient(feat))
-      like = -tf.cast(action.log_prob(data['action']), tf.float32).mean()
-      actor_loss += like
-      mets3['actor_bc_loss'] = like
+      if bc_data is not None:
+        data = world_model.preprocess(bc_data)
+        embed = world_model.encoder(data)
+        state = None
+        post, prior = world_model.rssm.observe(embed, data['action'], data['is_first'], state)
+        feat = world_model.rssm.get_feat(post)
+        action = self.actor(tf.stop_gradient(feat))
+        like = -tf.cast(action.log_prob(data['action']), tf.float32).mean()
+        actor_loss += like
+        mets3['actor_bc_loss'] = like
         
     with tf.GradientTape() as critic_tape:
       critic_loss, mets4 = self.critic_loss(seq, target)
