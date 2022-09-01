@@ -162,9 +162,9 @@ def train(env, config, outputs=None, is_train=True):
         # agnt.save(logdir / 'variables.pkl')
         agnt.save_sep(logdir)
         print("save param")
-        replay = common.Replay(logdir / 'train_episodes', **config.replay)
-        dataset = iter(replay.dataset(**config.dataset))
-        print("update dataset")
+        # replay = common.Replay(logdir / 'train_episodes', **config.replay)
+        # dataset = iter(replay.dataset(**config.dataset))
+        # print("update dataset")
   else:
     while step < config.steps:
       # logger.write()
