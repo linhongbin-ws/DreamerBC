@@ -146,12 +146,14 @@ class WorldModel(common.Module):
         losses[key] = -like.mean()
     model_loss = sum(
         self.config.loss_scales.get(k, 1.0) * v for k, v in losses.items())
-    model_loss += quant_loss
+    if quant_loss is not None:
+      model_loss += quant_loss
     outs = dict(
         embed=embed, feat=feat, post=post,
         prior=prior, likes=likes, kl=kl_value)
     metrics = {f'{name}_loss': value for name, value in losses.items()}
-    metrics['quant_loss'] = quant_loss
+    if quant_loss is not None:
+      metrics['quant_loss'] = quant_loss
     metrics['model_kl'] = kl_value.mean()
     metrics['prior_ent'] = self.rssm.get_dist(prior).entropy().mean()
     metrics['post_ent'] = self.rssm.get_dist(post).entropy().mean()

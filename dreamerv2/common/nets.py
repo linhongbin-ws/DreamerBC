@@ -27,7 +27,7 @@ class EnsembleRSSM(common.Module):
     self._cell = GRUCell(self._deter, norm=True)
     self._cast = lambda x: tf.cast(x, prec.global_policy().compute_dtype)
     self._quant = VectorQuantizer(num_embeddings=deter_quant, 
-                                  embedding_dim=deter)
+                                  embedding_dim=deter) if deter_quant >0 else None
 
   def initial(self, batch_size):
     dtype = prec.global_policy().compute_dtype
@@ -68,7 +68,9 @@ class EnsembleRSSM(common.Module):
     return prior
 
   def get_feat(self, state):
-    state['deter'], quant_loss = self._quant(state['deter'])
+    quant_loss = None
+    if self._quant is not None:
+      state['deter'], quant_loss = self._quant(state['deter'])
     stoch = self._cast(state['stoch'])
     if self._discrete:
       shape = stoch.shape[:-2] + [self._stoch * self._discrete]
