@@ -68,14 +68,12 @@ class EnsembleRSSM(common.Module):
     return prior
 
   def get_feat(self, state):
-    quant_loss = None
-    if self._quant is not None:
-      state['deter'], quant_loss = self._quant(state['deter'])
+
     stoch = self._cast(state['stoch'])
     if self._discrete:
       shape = stoch.shape[:-2] + [self._stoch * self._discrete]
       stoch = tf.reshape(stoch, shape)
-    return tf.concat([stoch, state['deter']], -1), quant_loss
+    return tf.concat([stoch, state['deter']], -1)
 
   def get_dist(self, state, ensemble=False):
     if ensemble:
@@ -123,6 +121,9 @@ class EnsembleRSSM(common.Module):
     deter = prev_state['deter']
     x, deter = self._cell(x, [deter])
     deter = deter[0]  # Keras wraps the state in a list.
+    # quant_loss = tf.zeros((deter.shape[0],) + (1,))
+    # if self._quant is not None:
+    #   deter, quant_loss = self._quant(deter)
     stats = self._suff_stats_ensemble(x)
     index = tf.random.uniform((), 0, self._ensemble, tf.int32)
     stats = {k: v[index] for k, v in stats.items()}

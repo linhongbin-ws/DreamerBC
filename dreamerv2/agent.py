@@ -41,7 +41,7 @@ class Agent(common.Module):
     sample = (mode == 'train') or not self.config.eval_state_mean
     latent, _ = self.wm.rssm.obs_step(
         latent, action, embed, obs['is_first'], sample)
-    feat, _ = self.wm.rssm.get_feat(latent)
+    feat= self.wm.rssm.get_feat(latent)
     if mode == 'eval':
       actor = self._task_behavior.actor(feat)
       action = actor.mode()
@@ -134,7 +134,7 @@ class WorldModel(common.Module):
     assert len(kl_loss.shape) == 0
     likes = {}
     losses = {'kl': kl_loss}
-    feat, quant_loss = self.rssm.get_feat(post)
+    feat = self.rssm.get_feat(post)
     for name, head in self.heads.items():
       grad_head = (name in self.config.grad_heads)
       inp = feat if grad_head else tf.stop_gradient(feat)
@@ -146,14 +146,14 @@ class WorldModel(common.Module):
         losses[key] = -like.mean()
     model_loss = sum(
         self.config.loss_scales.get(k, 1.0) * v for k, v in losses.items())
-    if quant_loss is not None:
-      model_loss += quant_loss
+    # if quant_loss is not None:
+    #   model_loss += quant_loss
     outs = dict(
         embed=embed, feat=feat, post=post,
         prior=prior, likes=likes, kl=kl_value)
     metrics = {f'{name}_loss': value for name, value in losses.items()}
-    if quant_loss is not None:
-      metrics['quant_loss'] = quant_loss
+    # if quant_loss is not None:
+    #   metrics['quant_loss'] = quant_loss
     metrics['model_kl'] = kl_value.mean()
     metrics['prior_ent'] = self.rssm.get_dist(prior).entropy().mean()
     metrics['post_ent'] = self.rssm.get_dist(post).entropy().mean()
@@ -163,13 +163,13 @@ class WorldModel(common.Module):
   def imagine(self, policy, start, is_terminal, horizon):
     flatten = lambda x: x.reshape([-1] + list(x.shape[2:]))
     start = {k: flatten(v) for k, v in start.items()}
-    start['feat'], _ = self.rssm.get_feat(start)
+    start['feat'] = self.rssm.get_feat(start)
     start['action'] = tf.zeros_like(policy(start['feat']).mode())
     seq = {k: [v] for k, v in start.items()}
     for _ in range(horizon):
       action = policy(tf.stop_gradient(seq['feat'][-1])).sample()
       state = self.rssm.img_step({k: v[-1] for k, v in seq.items()}, action)
-      feat, _ = self.rssm.get_feat(state)
+      feat = self.rssm.get_feat(state)
       for key, value in {**state, 'action': action, 'feat': feat}.items():
         seq[key].append(value)
     seq = {k: tf.stack(v, 0) for k, v in seq.items()}
@@ -218,10 +218,10 @@ class WorldModel(common.Module):
     embed = self.encoder(data)
     states, _ = self.rssm.observe(
         embed[:6, :5], data['action'][:6, :5], data['is_first'][:6, :5])
-    recon = decoder(self.rssm.get_feat(states)[0])[key].mode()[:6]
+    recon = decoder(self.rssm.get_feat(states))[key].mode()[:6]
     init = {k: v[:, -1] for k, v in states.items()}
     prior = self.rssm.imagine(data['action'][:6, 5:], init)
-    openl = decoder(self.rssm.get_feat(prior)[0])[key].mode()
+    openl = decoder(self.rssm.get_feat(prior))[key].mode()
     model = tf.concat([recon[:, :5] + 0.5, openl + 0.5], 1)
     error = (model - truth + 1) / 2
     video = tf.concat([truth, model, error], 2)
@@ -276,7 +276,7 @@ class ActorCritic(common.Module):
         embed = world_model.encoder(data)
         state = None
         post, prior = world_model.rssm.observe(embed, data['action'], data['is_first'], state)
-        feat, _ = world_model.rssm.get_feat(post)
+        feat = world_model.rssm.get_feat(post)
         action = self.actor(tf.stop_gradient(feat))
         like = -tf.cast(action.log_prob(data['action']), tf.float32).mean()
         actor_loss += like
