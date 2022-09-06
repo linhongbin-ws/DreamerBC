@@ -80,7 +80,7 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
     logger.add(replay.stats)
     logger.write()
 
-  if skip_gym_wrap:
+  if not skip_gym_wrap:
     env = common.GymWrapper(env)
     env = common.ResizeImage(env)
     if hasattr(env.act_space['action'], 'n'):
@@ -151,7 +151,7 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
     for _s in pbar:
       step.increment()
       mets = train_agent(next(dataset), next(bc_dataset))
-      pbar.set_description(f"actor pure loss: {mets['actor_pure_loss'].numpy()}, actor bc loss: {mets['actor_bc_loss'].numpy()}")
+      pbar.set_description(f"actor_pure: {mets['actor_pure_loss'].numpy()}, bc: {mets['actor_bc_loss'].numpy()} critic: {mets['critic_loss'].numpy()}")
       # _ = agnt.report(next(dataset))
       [metrics[key].append(value) for key, value in mets.items()]
       if should_log(step):
