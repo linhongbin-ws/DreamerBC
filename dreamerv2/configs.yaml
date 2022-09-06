@@ -31,6 +31,7 @@ defaults:
   jit: True
   offline_step: 20000000
   istrain: False
+  bc_dir: null
 
   # Agent
   clip_rewards: tanh

@@ -116,10 +116,15 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
   print('Create agent.')
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
   dataset = iter(replay.dataset(**config.dataset))
-  bc_replay = common.Replay(logdir / 'train_episodes' / 'oracle', **config.replay)
-  bc_dataset = iter(bc_replay.dataset(**config.dataset))
+  if config.bc_dir is not None:
+    print(config.bc_dir)
+    bc_replay = common.Replay(config.bc_dir, **config.replay)
+    bc_dataset = iter(bc_replay.dataset(**config.dataset))
+  else:
+    bc_dataset = None
+  bc_func = lambda dataset: next(dataset) if dataset is not None else None
   train_agent = common.CarryOverState(agnt.train)
-  train_agent(next(dataset), next(bc_dataset))
+  train_agent(next(dataset), bc_func(bc_dataset))
   agnt.load_sep(logdir)
   # if (logdir / 'variables.pkl').exists():
   #   print(f"load {str(logdir)}")
@@ -150,8 +155,11 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
     pbar = tqdm(range(config.offline_step))
     for _s in pbar:
       step.increment()
-      mets = train_agent(next(dataset), next(bc_dataset))
-      pbar.set_description(f"actor_pure: {mets['actor_pure_loss'].numpy()}, bc: {mets['actor_bc_loss'].numpy()} critic: {mets['critic_loss'].numpy()}")
+      mets = train_agent(next(dataset), bc_func(bc_dataset))
+      des_str = f"actor_pure: {mets['actor_pure_loss'].numpy()} critic: {mets['critic_loss'].numpy()}"
+      if bc_dataset is not None:
+        des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy()} "
+      pbar.set_description(des_str)
       # _ = agnt.report(next(dataset))
       [metrics[key].append(value) for key, value in mets.items()]
       if should_log(step):
