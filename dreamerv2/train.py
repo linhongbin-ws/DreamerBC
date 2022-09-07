@@ -91,6 +91,20 @@ def main():
       reward = bool(['noreward', 'reward'].index(task)) or mode == 'eval'
       env = common.Crafter(outdir, reward)
       env = common.OneHotAction(env)
+    elif suite == 'minigrid':
+      import gym
+      from gym.spaces import Dict
+      import gym_minigrid
+      env = gym.make(task)
+      env = gym_minigrid.wrappers.RGBImgPartialObsWrapper(env)
+      env.observation_space = Dict({k:v for k,v in env.observation_space.items() if k != 'mission'})
+      env = common.GymWrapper(env)
+      env = common.ResizeImage(env)
+      if hasattr(env.act_space['action'], 'n'):
+        env = common.OneHotAction(env)
+      else:
+        env = common.NormalizeAction(env)
+      env.observation_space = Dict({k:v for k,v in env.observation_space.items() if k != 'mission'})
     else:
       raise NotImplementedError(suite)
     env = common.TimeLimit(env, config.time_limit)

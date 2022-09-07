@@ -53,6 +53,7 @@ defaults:
   model_opt: {opt: adam, lr: 1e-4, eps: 1e-5, clip: 100, wd: 1e-6}
 
   # Actor Critic
+  actor_type: "ActorCritic"
   actor: {layers: 4, units: 400, act: elu, norm: none, dist: auto, min_std: 0.1}
   critic: {layers: 4, units: 400, act: elu, norm: none, dist: mse}
   actor_opt: {opt: adam, lr: 8e-5, eps: 1e-5, clip: 100, wd: 1e-6}
@@ -160,6 +161,18 @@ dmc_proprio:
   critic_opt.lr: 8e-5
   actor_ent: 1e-4
   kl.free: 1.0
+
+minigrid:
+  log_every: 1e3
+  train_every: 10
+  prefill: 1e4
+  actor_ent: 3e-3
+  loss_scales.kl: 1.0
+  discount: 0.99
+
+mcts:
+  actor_type: "AlphaZero"
+  
 
 debug:
 

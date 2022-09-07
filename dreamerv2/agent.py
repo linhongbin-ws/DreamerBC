@@ -14,7 +14,13 @@ class Agent(common.Module):
     self.step = step
     self.tfstep = tf.Variable(int(self.step), tf.int64)
     self.wm = WorldModel(config, obs_space, self.tfstep)
-    self._task_behavior = ActorCritic(config, self.act_space, self.tfstep)
+    if config.actor_type == "ActorCritic":
+      self._task_behavior = ActorCritic(config, self.act_space, self.tfstep)
+    elif config.actor_type == "AlphaZero":
+      from dreamerv2 import mcts
+      self._task_behavior = mcts.AlphaZero(config, self.act_space, self.tfstep)
+    else:
+      raise NotImplementedError
     if config.expl_behavior == 'greedy':
       self._expl_behavior = self._task_behavior
     else:
@@ -160,14 +166,16 @@ class WorldModel(common.Module):
     last_state = {k: v[:, -1] for k, v in post.items()}
     return model_loss, last_state, outs, metrics
 
-  def imagine(self, policy, start, is_terminal, horizon):
+  def imagine(self, policy, start, is_terminal, horizon, policy_state_in=False):
     flatten = lambda x: x.reshape([-1] + list(x.shape[2:]))
     start = {k: flatten(v) for k, v in start.items()}
     start['feat'] = self.rssm.get_feat(start)
-    start['action'] = tf.zeros_like(policy(start['feat']).mode())
+    _in = start if policy_state_in else start['feat']
+    start['action'] = tf.zeros_like(policy(_in).mode())
     seq = {k: [v] for k, v in start.items()}
     for _ in range(horizon):
-      action = policy(tf.stop_gradient(seq['feat'][-1])).sample()
+      _in = {k:tf.stop_gradient(v[-1]) for k,v in seq.items()} if policy_state_in else tf.stop_gradient(seq['feat'][-1])
+      action = policy(_in).sample()
       state = self.rssm.img_step({k: v[-1] for k, v in seq.items()}, action)
       feat = self.rssm.get_feat(state)
       for key, value in {**state, 'action': action, 'feat': feat}.items():
