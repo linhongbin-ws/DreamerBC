@@ -172,6 +172,7 @@ minigrid:
 
 mcts:
   actor_type: "AlphaZero"
+  imag_horizon: 8
   
 
 debug:

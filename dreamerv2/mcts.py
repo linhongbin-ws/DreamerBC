@@ -10,7 +10,7 @@ def softmax(x):
     return probs
 
 class TreeNode(object):
-    def __init__(self, parent, prior_p, state, is_end):
+    def __init__(self, parent, prior_p, state, discount, reward):
         self._parent = parent
         self._children = {}  # a map from action to TreeNode
         self._n_visits = 0
@@ -18,12 +18,13 @@ class TreeNode(object):
         self._u = 0
         self._P = prior_p
         self._state = state
-        self._is_end = is_end
+        self._discount = discount
+        self._reward = reward
 
     def expand(self, nxt_s):
-        for action, prob, state, is_end in nxt_s:
+        for action, action_prob, nxt_state, discount, reward in nxt_s:
             if action not in self._children:
-                self._children[action] = TreeNode(self, prob, state, is_end)
+                self._children[action] = TreeNode(self, action_prob, nxt_state, discount, reward)
 
     def select(self, c_puct):
         return max(self._children.items(),
@@ -37,7 +38,7 @@ class TreeNode(object):
 
     def update_recursive(self, leaf_value):
         if self._parent:
-            self._parent.update_recursive(-leaf_value)
+            self._parent.update_recursive(leaf_value*self._discount+self._reward)
         self.update(leaf_value)
 
     def get_value(self, c_puct):
@@ -53,13 +54,14 @@ class TreeNode(object):
 
 
 class MCTS(object):
-    def __init__(self, value_func, actor_func, action_n, c_puct=5, n_playout=100):
+    def __init__(self, value_func, actor_func, action_n, c_puct=5, n_playout=10, terminate_discount=0.2):
         self._root = None
         self._value_func = value_func
         self._actor_func =  actor_func
         self._c_puct = c_puct
         self._n_playout = n_playout
         self._action_n =  action_n
+        self._terminate_discount = terminate_discount
 
     def _playout(self, wm):
         node = self._root
@@ -68,18 +70,20 @@ class MCTS(object):
                 break
             action, node = node.select(self._c_puct)  # Greedily select next move.
 
-        leaf_value = self._value_func(node._state['feat']).mode().numpy()
         
-        if not node._is_end:
-            actions, action_probs, nxt_states, is_terminates = self.wm_step(node._state, wm)
-            nxt_s = zip(actions, action_probs, nxt_states, is_terminates)
+        
+        if node._discount >= self._terminate_discount:
+            leaf_value = self._value_func(node._state['feat']).mode().numpy()
+            actions, action_probs, nxt_states, discounts, rewards = self.wm_step(node._state, wm)
+            nxt_s = zip(actions, action_probs, nxt_states, discounts, rewards)
             node.expand(nxt_s)
-
+        else:
+            leaf_value = node._reward
         node.update_recursive(leaf_value)
 
     def get_move_probs(self, state, wm, temp=1e-3):
         if self._root is None:
-            self._root = TreeNode(None, 1.0, state, False)
+            self._root = TreeNode(None, 1.0, state, 1, 0) 
 
         for n in range(self._n_playout):
             self._playout(wm)
@@ -100,7 +104,7 @@ class MCTS(object):
     #         self._root = TreeNode(None, 1.0)
 
     def get_action(self, state, wm, temp=1e-3, is_train=True, is_reset_tree=False):
-
+        assert state['deter'].shape[0] == 1 # only support batch == 1
         acts, probs = self.get_move_probs(state, wm, temp)
         if is_train:
             move = np.random.choice(
@@ -116,7 +120,7 @@ class MCTS(object):
         # else:
         #     self.mcts.update_with_move(move)
 
-        return common.OneHotDist(probs)
+        return common.OneHotDist(np.array([probs]))
 
     
     def wm_step(self, state, wm):
@@ -125,15 +129,18 @@ class MCTS(object):
         # start['feat'] = wm.rssm.get_feat(start)
         nxt_state = wm.rssm.img_step(_state, _action)
         nxt_state['feat'] = wm.rssm.get_feat(nxt_state)
-        is_terminate = wm.heads['discount'](nxt_state['feat']).mode()
+        discount = wm.heads['discount'](nxt_state['feat']).mean()
+        reward = wm.heads['reward'](nxt_state['feat']).mode()
         _action_probs = self._actor_func(state['feat'])
         # nxt_state['feat'] = feat
         actions = [i for i in range(self._action_n)]
         _action_probs = _action_probs.prob(_action).numpy()
         action_probs = _action_probs.tolist()
         nxt_states = [{k:v[i:i+1] for k,v in nxt_state.items()} for i in range(self._action_n)]
-        is_terminates = [is_terminate[i] for i in range(self._action_n)]
-        return actions, action_probs, nxt_states, is_terminates
+        discounts = [discount[i] for i in range(self._action_n)]
+        rewards = [reward[i] for i in range(self._action_n)]
+
+        return actions, action_probs, nxt_states, discounts, rewards
 
     
 class AlphaZero(common.Module):
@@ -164,7 +171,7 @@ class AlphaZero(common.Module):
                                  actor_func=self.actor, 
                                  action_n=act_space.n, 
                                  c_puct=5, 
-                                 n_playout=100)
+                                 n_playout=10)
         
     def train(self, world_model, start, is_terminal, reward_fn, bc_data):
         metrics = {}
@@ -176,16 +183,21 @@ class AlphaZero(common.Module):
         # them to scale the whole sequence.
         
         _policy = lambda *args: self.mcts_planner.get_action(*args, wm=world_model, temp=1e-3, is_train=True)
-        with tf.GradientTape() as actor_tape:
-            for i in range(is_terminal.shape[0]):
-                for j in range(is_terminal.shape[1]):
-                    _start = {k: v[i:i+1,j:j+1,...] for k, v in start.items()}
-                    _is_terminal = is_terminal[i:i+1,j:j+1]
-                    seq = world_model.imagine(_policy, _start, _is_terminal, hor, policy_state_in=True)
-                    reward = reward_fn(seq)
-                    seq['reward'], mets1 = self.rewnorm(reward)
-                    mets1 = {f'reward_{k}': v for k, v in mets1.items()}
-                    target, mets2 = self.target(seq)
+        seqs = []
+        targets = []
+        for i in range(is_terminal.shape[0]):
+            for j in range(is_terminal.shape[1]):
+                _start = {k: v[i:i+1,j:j+1,...] for k, v in start.items()}
+                _is_terminal = is_terminal[i:i+1,j:j+1]
+                seq = world_model.imagine(_policy, _start, _is_terminal, hor, policy_state_in=True)
+                reward = reward_fn(seq)
+                seq['reward'], mets1 = self.rewnorm(reward)
+                mets1 = {f'reward_{k}': v for k, v in mets1.items()}
+                target, mets2 = self.target(seq)
+                seqs.append(seq)
+                targets.append(target)
+        seq = tf.concat(seqs, 1)
+        target = tf.concat(targets, 1)
             
         with tf.GradientTape() as critic_tape:
             critic_loss, mets4 = self.critic_loss(seq, target)
