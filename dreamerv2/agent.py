@@ -3,7 +3,7 @@ from tensorflow.keras import mixed_precision as prec
 
 import common
 import expl
-
+import time
 
 class Agent(common.Module):
 
@@ -166,20 +166,35 @@ class WorldModel(common.Module):
     last_state = {k: v[:, -1] for k, v in post.items()}
     return model_loss, last_state, outs, metrics
 
-  def imagine(self, policy, start, is_terminal, horizon, policy_state_in=False):
+  def imagine(self, policy, start, is_terminal, horizon, actor_type='ActorCritic'):
     flatten = lambda x: x.reshape([-1] + list(x.shape[2:]))
     start = {k: flatten(v) for k, v in start.items()}
     start['feat'] = self.rssm.get_feat(start)
-    _in = start if policy_state_in else start['feat']
-    start['action'] = tf.zeros_like(policy(_in).mode())
+    if actor_type == 'MCTS':
+      action, action_prob = policy.get_action(start, wm=self, n_playout=1)
+      start['action'] = tf.zeros_like(action.mode())
+      start['action_prob'] = tf.zeros_like(action_prob)
+      policy.update_tree(None)
+    else:
+      start['action'] = tf.zeros_like(policy(start['feat']).mode())
     seq = {k: [v] for k, v in start.items()}
     for _ in range(horizon):
-      _in = {k:tf.stop_gradient(v[-1]) for k,v in seq.items()} if policy_state_in else tf.stop_gradient(seq['feat'][-1])
-      action = policy(_in).sample()
+      _in = {k:tf.stop_gradient(v[-1]) for k,v in seq.items()} if actor_type=='MCTS' else tf.stop_gradient(seq['feat'][-1])
+      if actor_type == 'MCTS':
+        _start_t = time.time()
+        action, action_prob = policy.get_action(start, wm=self, n_playout=None)
+        action = action.sample()
+        seq['action_prob'].append(action_prob)
+        policy.update_tree(tf.math.argmax(action[0], axis=0).numpy())
+        print("elapse time: ",time.time() - _start_t)
+      else:
+        action = policy(_in).sample()
+      
       state = self.rssm.img_step({k: v[-1] for k, v in seq.items()}, action)
       feat = self.rssm.get_feat(state)
       for key, value in {**state, 'action': action, 'feat': feat}.items():
         seq[key].append(value)
+
     seq = {k: tf.stack(v, 0) for k, v in seq.items()}
     if 'discount' in self.heads:
       disc = self.heads['discount'](seq['feat']).mean()

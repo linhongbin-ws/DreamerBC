@@ -81,11 +81,13 @@ class MCTS(object):
             leaf_value = node._reward
         node.update_recursive(leaf_value)
 
-    def get_move_probs(self, state, wm, temp=1e-3):
+    def get_move_probs(self, state, wm, temp=1e-3, n_playout=None):
         if self._root is None:
             self._root = TreeNode(None, 1.0, state, 1, 0) 
 
-        for n in range(self._n_playout):
+        _n_playout = n_playout or self._n_playout
+        # for n in range(_n_playout):
+        while(self._root._n_visits<_n_playout):
             self._playout(wm)
 
         # calc the move probabilities based on visit counts at the root node
@@ -96,31 +98,38 @@ class MCTS(object):
 
         return acts, act_probs
 
-    # def update_with_move(self, last_move):
-    #     if last_move in self._root._children:
-    #         self._root = self._root._children[last_move]
-    #         self._root._parent = None
-    #     else:
-    #         self._root = TreeNode(None, 1.0)
-
-    def get_action(self, state, wm, temp=1e-3, is_train=True, is_reset_tree=False):
-        assert state['deter'].shape[0] == 1 # only support batch == 1
-        acts, probs = self.get_move_probs(state, wm, temp)
-        if is_train:
-            move = np.random.choice(
-                acts,
-                p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs)))
-            )
+    def update_with_move(self, last_move):
+        if last_move in self._root._children:
+            self._root = self._root._children[last_move]
+            self._root._parent = None
         else:
-            move = np.random.choice(acts, p=probs)
+            self._root = None 
+
+    def get_action(self, state, wm, temp=1e-3, n_playout=None):
+        assert state['deter'].shape[0] == 1 # only support batch == 1
+        _, probs = self.get_move_probs(state, wm, temp, n_playout)
+        # if is_train:
+        #     move = np.random.choice(
+        #         acts,
+        #         p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs)))
+        #     )
+        # else:
+        #     move = np.random.choice(acts, p=probs)
         
-        self._root = None
+        # self._root = None
+        
         # if is_reset_tree:
         #     self.mcts.update_with_move(-1)
         # else:
         #     self.mcts.update_with_move(move)
-
-        return common.OneHotDist(np.array([probs]))
+        out_probs = np.array([probs])
+        return common.OneHotDist(out_probs), tf.convert_to_tensor(out_probs, dtype=tf.float32)
+    
+    def update_tree(self, move=None):
+        if move is None:
+            self.update_with_move(-1)
+        else:
+            self.update_with_move(move)
 
     
     def wm_step(self, state, wm):
@@ -171,7 +180,7 @@ class AlphaZero(common.Module):
                                  actor_func=self.actor, 
                                  action_n=act_space.n, 
                                  c_puct=5, 
-                                 n_playout=10)
+                                 n_playout=20)
         
     def train(self, world_model, start, is_terminal, reward_fn, bc_data):
         metrics = {}
@@ -182,27 +191,36 @@ class AlphaZero(common.Module):
         # training the action that led into the first step anyway, so we can use
         # them to scale the whole sequence.
         
-        _policy = lambda *args: self.mcts_planner.get_action(*args, wm=world_model, temp=1e-3, is_train=True)
-        seqs = []
+        # _policy = lambda *args: self.mcts_planner.get_action(*args, wm=world_model, temp=1e-3, is_train=True)
+        _policy = self.mcts_planner
+        seqs = None
         targets = []
-        for i in range(is_terminal.shape[0]):
-            for j in range(is_terminal.shape[1]):
+        for i in range(1):
+            for j in range(2):
+        # for i in range(is_terminal.shape[0]):
+        #     for j in range(is_terminal.shape[1]):
                 _start = {k: v[i:i+1,j:j+1,...] for k, v in start.items()}
                 _is_terminal = is_terminal[i:i+1,j:j+1]
-                seq = world_model.imagine(_policy, _start, _is_terminal, hor, policy_state_in=True)
+                seq = world_model.imagine(_policy, _start, _is_terminal, hor, actor_type='MCTS')
                 reward = reward_fn(seq)
                 seq['reward'], mets1 = self.rewnorm(reward)
                 mets1 = {f'reward_{k}': v for k, v in mets1.items()}
                 target, mets2 = self.target(seq)
-                seqs.append(seq)
+                if seqs is None:
+                    seqs = {k:[v] for k, v in seq.items()}
+                else:
+                    seqs = {k:seqs[k]+[v] for k, v in seq.items()}
                 targets.append(target)
-        seq = tf.concat(seqs, 1)
+        seq = {k:tf.concat(v, 1)for k, v in seqs.items()}
         target = tf.concat(targets, 1)
             
         with tf.GradientTape() as critic_tape:
             critic_loss, mets4 = self.critic_loss(seq, target)
         metrics.update(self.critic_opt(critic_tape, critic_loss, self.critic))
-        metrics.update(**mets1, **mets2, **mets4)
+        with tf.GradientTape() as actor_tape:
+            actor_loss, mets3 = self.actor_loss(seq)
+        metrics.update(self.actor_opt(actor_tape, actor_loss, self.actor))
+        metrics.update(**mets1, **mets2, **mets3, **mets4)
         self.update_slow_target()  # Variables exist after first forward pass.
         return metrics
 
@@ -221,6 +239,23 @@ class AlphaZero(common.Module):
         critic_loss = -(dist.log_prob(target) * weight[:-1]).mean()
         metrics = {'critic': dist.mode().mean()}
         return critic_loss, metrics
+    
+    def actor_loss(self, seq):
+        # supervised learning actor
+        metrics = {}
+        policy = self.actor(tf.stop_gradient(seq['feat'][:-1]))
+
+        objective = policy.log_prob(seq['action_prob'][1:])
+
+        # ent = policy.entropy()
+        ent_scale = common.schedule(self.config.actor_ent, self.tfstep)
+        # objective += ent_scale * ent
+        # weight = tf.stop_gradient(seq['weight'])
+        # actor_loss = -(weight[:-2] * objective).mean()
+        actor_loss = -objective.mean()
+        # metrics['actor_ent'] = ent.mean()
+        # metrics['actor_ent_scale'] = ent_scale
+        return actor_loss, metrics
 
     def target(self, seq):
         # States:     [z0]  [z1]  [z2]  [z3]

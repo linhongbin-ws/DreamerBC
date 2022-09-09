@@ -172,7 +172,7 @@ minigrid:
 
 mcts:
   actor_type: "AlphaZero"
-  imag_horizon: 8
+  # imag_horizon: 8
   
 
 debug:
@@ -186,3 +186,4 @@ debug:
   train_steps: 1
   replay: {minlen: 10, maxlen: 30}
   dataset: {batch: 10, length: 10}
+  imag_horizon: 6
