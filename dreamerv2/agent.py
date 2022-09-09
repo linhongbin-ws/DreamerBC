@@ -211,6 +211,8 @@ class WorldModel(common.Module):
     # will be valid, not whether the current state is valid.
     seq['weight'] = tf.math.cumprod(
         tf.concat([tf.ones_like(disc[:1]), disc[:-1]], 0), 0)
+    if actor_type == 'MCTS':
+      policy.update_tree(None)
     return seq
 
   @tf.function

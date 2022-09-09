@@ -28,7 +28,7 @@ defaults:
   log_keys_mean: '^$'
   log_keys_max: '^$'
   precision: 16
-  jit: True
+  jit: False
   offline_step: 20000000
   istrain: False
   bc_dir: null
