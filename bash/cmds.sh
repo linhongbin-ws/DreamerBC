@@ -1,1 +1,0 @@
-python dreamerv2/train.py --logdir ./data/minigrid --configs minigrid mcts --task minigrid_MiniGrid-DoorKey-6x6-v0
