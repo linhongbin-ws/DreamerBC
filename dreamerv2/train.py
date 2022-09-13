@@ -166,14 +166,13 @@ def main():
   report_dataset = iter(train_replay.dataset(**config.dataset))
   eval_dataset = iter(eval_replay.dataset(**config.dataset))
   agnt = agent.Agent(config, obs_space, act_space, step)
-  train_agent = common.CarryOverState(agnt.train)
+  train_agent = common.CarryOverState(lambda *args,**kwargs: agnt.train(*args, **kwargs, force=True))
   train_agent(next(train_dataset))
-  if (logdir / 'variables.pkl').exists():
-    agnt.load(logdir / 'variables.pkl')
-  else:
-    print('Pretrain agent.')
-    for _ in range(config.pretrain):
-      train_agent(next(train_dataset))
+  agnt.load_sep(logdir)
+  train_agent = common.CarryOverState(agnt.train)
+  print('Pretrain agent.')
+  for _ in range(config.pretrain):
+    train_agent(next(train_dataset))
   train_policy = lambda *args: agnt.policy(
       *args, mode='explore' if should_expl(step) else 'train')
   eval_policy = lambda *args: agnt.policy(*args, mode='eval')
@@ -198,7 +197,7 @@ def main():
     eval_driver(eval_policy, episodes=config.eval_eps)
     print('Start training.')
     train_driver(train_policy, steps=config.eval_every)
-    agnt.save(logdir / 'variables.pkl')
+    agnt.save_sep(logdir)
   for env in train_envs + eval_envs:
     try:
       env.close()

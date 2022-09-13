@@ -4,7 +4,7 @@ import dreamerv2.api as dv2
 from gym.spaces import Dict
 
 config = dv2.defaults.update({
-    'logdir': './data/minigrid',
+    'logdir': './data/minigrid/MCTS',
     'log_every': 1e3,
     'train_every': 10,
     'prefill': 1e4,

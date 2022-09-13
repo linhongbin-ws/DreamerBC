@@ -66,17 +66,18 @@ class Agent(common.Module):
     return outputs, state
 
   @tf.function
-  def train(self, data,  bc_data=None, state=None,):
+  def train(self, data,  bc_data=None, state=None, force=False):
     metrics = {}
     state, outputs, mets = self.wm.train(data, state)
     metrics.update(mets)
-    start = outputs['post']
-    reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
-    metrics.update(self._task_behavior.train(
-        self.wm, start, data['is_terminal'], reward, bc_data))
-    if self.config.expl_behavior != 'greedy':
-      mets = self._expl_behavior.train(start, outputs, data)[-1]
-      metrics.update({'expl_' + key: value for key, value in mets.items()})
+    if self.tfstep > self.config.train_only_wm_steps or force: 
+      start = outputs['post']
+      reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
+      metrics.update(self._task_behavior.train(
+          self.wm, start, data['is_terminal'], reward, bc_data))
+      if self.config.expl_behavior != 'greedy':
+        mets = self._expl_behavior.train(start, outputs, data)[-1]
+        metrics.update({'expl_' + key: value for key, value in mets.items()})
     return state, metrics
 
   @tf.function
@@ -175,18 +176,19 @@ class WorldModel(common.Module):
       start['action'] = tf.zeros_like(action.mode())
       start['action_prob'] = tf.zeros_like(action_prob)
       policy.update_tree(None)
+      _start_whole_t = time.time()
     else:
       start['action'] = tf.zeros_like(policy(start['feat']).mode())
     seq = {k: [v] for k, v in start.items()}
     for _ in range(horizon):
       _in = {k:tf.stop_gradient(v[-1]) for k,v in seq.items()} if actor_type=='MCTS' else tf.stop_gradient(seq['feat'][-1])
       if actor_type == 'MCTS':
-        _start_t = time.time()
+        # _start_t = time.time()
         action, action_prob = policy.get_action(start, wm=self, n_playout=None)
         action = action.sample()
         seq['action_prob'].append(action_prob)
         policy.update_tree(tf.math.argmax(action[0], axis=0).numpy())
-        print("elapse time: ",time.time() - _start_t)
+        # print("elapse time: ",time.time() - _start_t)
       else:
         action = policy(_in).sample()
       
@@ -213,6 +215,7 @@ class WorldModel(common.Module):
         tf.concat([tf.ones_like(disc[:1]), disc[:-1]], 0), 0)
     if actor_type == 'MCTS':
       policy.update_tree(None)
+      print("gen 1 traj, time: ",time.time() - _start_whole_t)
     return seq
 
   @tf.function
@@ -278,7 +281,7 @@ class ActorCritic(common.Module):
     self.critic_opt = common.Optimizer('critic', **self.config.critic_opt)
     self.rewnorm = common.StreamNorm(**self.config.reward_norm)
 
-  def train(self, world_model, start, is_terminal, reward_fn, bc_data):
+  def train(self, world_model, start, is_terminal, reward_fn, bc_data, **kwargs):
     metrics = {}
     hor = self.config.imag_horizon
     # The weights are is_terminal flags for the imagination start states.

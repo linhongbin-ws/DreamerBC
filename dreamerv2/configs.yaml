@@ -29,9 +29,12 @@ defaults:
   log_keys_max: '^$'
   precision: 16
   jit: False
+
+  # new feature
   offline_step: 20000000
   istrain: False
   bc_dir: null
+  train_only_wm_steps: 10000
 
   # Agent
   clip_rewards: tanh
@@ -83,6 +86,13 @@ defaults:
   disag_offset: 1
   disag_action_cond: True
   expl_model_loss: kl
+
+  #mcts 
+  train_seq_buffer: 1000
+  train_mcts_batch_size: 16
+  train_mcts_n_playout: 20
+  train_mcts_c_puct: 5
+  
 
 
 atari:
@@ -164,17 +174,19 @@ dmc_proprio:
 
 minigrid:
   task: minigrid_MiniGrid-DoorKey-6x6-v0
-  eval_every: 2e3
-  log_every: 2e3
+  eval_every: 1e4
+  log_every: 1e4
   train_every: 10
   prefill: 1e4
   actor_ent: 3e-3
   loss_scales.kl: 1.0
   discount: 0.99
+  train_only_wm_steps: 22000
 
 mcts:
   actor_type: "AlphaZero"
   # imag_horizon: 8
+  train_seq_buffer: 1000
   
 
 debug:
