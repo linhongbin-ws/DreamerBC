@@ -28,7 +28,7 @@ defaults:
   log_keys_mean: '^$'
   log_keys_max: '^$'
   precision: 16
-  jit: False
+  jit: True
 
   # new feature
   offline_step: 20000000
@@ -188,7 +188,7 @@ mcts:
   actor_type: "AlphaZero"
   # imag_horizon: 8
   train_seq_buffer: 1000
-  
+  jit: False
 
 debug:
 
