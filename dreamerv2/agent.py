@@ -70,14 +70,14 @@ class Agent(common.Module):
     metrics = {}
     state, outputs, mets = self.wm.train(data, state)
     metrics.update(mets)
-    if self.tfstep > self.config.train_only_wm_steps or force: 
-      start = outputs['post']
-      reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
-      metrics.update(self._task_behavior.train(
-          self.wm, start, data['is_terminal'], reward, bc_data))
-      if self.config.expl_behavior != 'greedy':
-        mets = self._expl_behavior.train(start, outputs, data)[-1]
-        metrics.update({'expl_' + key: value for key, value in mets.items()})
+    # if self.tfstep > self.config.train_only_wm_steps or force: 
+    start = outputs['post']
+    reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
+    metrics.update(self._task_behavior.train(
+        self.wm, start, data['is_terminal'], reward, bc_data))
+    if self.config.expl_behavior != 'greedy':
+      mets = self._expl_behavior.train(start, outputs, data)[-1]
+      metrics.update({'expl_' + key: value for key, value in mets.items()})
     return state, metrics
 
   @tf.function

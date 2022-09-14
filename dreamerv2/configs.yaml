@@ -34,7 +34,7 @@ defaults:
   offline_step: 20000000
   istrain: False
   bc_dir: null
-  train_only_wm_steps: 10000
+  train_only_wm_steps: 0
 
   # Agent
   clip_rewards: tanh
