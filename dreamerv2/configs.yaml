@@ -184,6 +184,9 @@ minigrid:
   discount: 0.99
   train_only_wm_steps: 22000
 
+  train_mcts_n_playout: 60
+  train_mcts_c_puct: 3
+
 mcts:
   actor_type: "AlphaZero"
   # imag_horizon: 8

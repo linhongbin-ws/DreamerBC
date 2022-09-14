@@ -21,6 +21,7 @@ class TreeNode(object):
         self._state = state
         self._discount = discount
         self._reward = reward
+        self._record_value = None
 
     def expand(self, nxt_s):
         for action, action_prob, nxt_state, discount, reward in nxt_s:
@@ -45,7 +46,8 @@ class TreeNode(object):
     def get_value(self, c_puct):
         self._u = (c_puct * self._P *
                    np.sqrt(self._parent._n_visits) / (1 + self._n_visits))
-        return self._Q + self._u
+        self._record_value = self._Q + self._u
+        return self._record_value
 
     def is_leaf(self):
         return self._children == {}
@@ -88,7 +90,7 @@ class MCTS(object):
 
         _n_playout = n_playout or self._n_playout
         # for n in range(_n_playout):
-        while(self._root._n_visits<_n_playout):
+        while(self._root._n_visits<=_n_playout):
             self._playout(wm)
 
         # calc the move probabilities based on visit counts at the root node
