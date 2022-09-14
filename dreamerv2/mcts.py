@@ -94,6 +94,8 @@ class MCTS(object):
         # calc the move probabilities based on visit counts at the root node
         act_visits = [(act, node._n_visits)
                       for act, node in self._root._children.items()]
+        if len(act_visits) == 0:
+            act_visits = [(i, 1) for i in range(self._action_n)]
         acts, visits = zip(*act_visits)
         act_probs = softmax(1.0/temp * np.log(np.array(visits) + 1e-10))
 
@@ -185,42 +187,48 @@ class AlphaZero(common.Module):
         
         self.train_seq_buffer = deque(maxlen=self.config.train_seq_buffer)
         
+        self.should_gen_traj = common.Every(config.train_mcts_gen_traj_every)
+        
     def train(self, world_model, start, is_terminal, reward_fn, bc_data, **kwargs):
         metrics = {}
-        hor = self.config.imag_horizon
-        # The weights are is_terminal flags for the imagination start states.
-        # Technically, they should multiply the losses from the second trajectory
-        # step onwards, which is the first imagined step. However, we are not
-        # training the action that led into the first step anyway, so we can use
-        # them to scale the whole sequence.
-        
-        # _policy = lambda *args: self.mcts_planner.get_action(*args, wm=world_model, temp=1e-3, is_train=True)
-        _policy = self.mcts_planner
-        # seqs = None
-        # targets = []
-        i = random.randint(0, is_terminal.shape[0]-1)
-        j = random.randint(0, is_terminal.shape[1]-1)
-        # for i in range(1):
-        #     for j in range(1):
-        # for i in range(is_terminal.shape[0]):
-        #     for j in range(is_terminal.shape[1]):
-        
-        _start = {k: v[i:i+1,j:j+1,...] for k, v in start.items()}
-        _is_terminal = is_terminal[i:i+1,j:j+1]
-        seq = world_model.imagine(_policy, _start, _is_terminal, hor, actor_type='MCTS')
-        reward = reward_fn(seq)
-        seq['reward'], mets1 = self.rewnorm(reward)
-        mets1 = {f'reward_{k}': v for k, v in mets1.items()}
-        target, mets2 = self.target(seq)
-                # if seqs is None:
-                #     seqs = {k:[v] for k, v in seq.items()}
-                # else:
-                #     seqs = {k:seqs[k]+[v] for k, v in seq.items()}
-                # targets.append(target)
-        # seq = {k:tf.concat(v, 1)for k, v in seqs.items()}
-        # target = tf.concat(targets, 1)
-        self.train_seq_buffer.append((seq, target))
-        
+        if self.should_gen_traj(self.tfstep):
+            hor = self.config.imag_horizon
+            # The weights are is_terminal flags for the imagination start states.
+            # Technically, they should multiply the losses from the second trajectory
+            # step onwards, which is the first imagined step. However, we are not
+            # training the action that led into the first step anyway, so we can use
+            # them to scale the whole sequence.
+            
+            # _policy = lambda *args: self.mcts_planner.get_action(*args, wm=world_model, temp=1e-3, is_train=True)
+            _policy = self.mcts_planner
+            # seqs = None
+            # targets = []
+            i = random.randint(0, is_terminal.shape[0]-1)
+            j = random.randint(0, is_terminal.shape[1]-1)
+            # for i in range(1):
+            #     for j in range(1):
+            # for i in range(is_terminal.shape[0]):
+            #     for j in range(is_terminal.shape[1]):
+            
+            _start = {k: v[i:i+1,j:j+1,...] for k, v in start.items()}
+            _is_terminal = is_terminal[i:i+1,j:j+1]
+            seq = world_model.imagine(_policy, _start, _is_terminal, hor, actor_type='MCTS')
+            reward = reward_fn(seq)
+            seq['reward'], mets1 = self.rewnorm(reward)
+            mets1 = {f'reward_{k}': v for k, v in mets1.items()}
+            
+            target, mets2 = self.target(seq)
+                    # if seqs is None:
+                    #     seqs = {k:[v] for k, v in seq.items()}
+                    # else:
+                    #     seqs = {k:seqs[k]+[v] for k, v in seq.items()}
+                    # targets.append(target)
+            # seq = {k:tf.concat(v, 1)for k, v in seqs.items()}
+            # target = tf.concat(targets, 1)
+            self.train_seq_buffer.append((seq, target))
+            print(f"traj buffer size:{len(self.train_seq_buffer)}")
+            metrics.update(**mets1, **mets2)
+            
         # bz = is_terminal.shape[0] * is_terminal.shape[1]
         bz = self.config.train_mcts_batch_size
         if len(self.train_seq_buffer) >= bz:
@@ -235,7 +243,7 @@ class AlphaZero(common.Module):
             with tf.GradientTape() as actor_tape:
                 actor_loss, mets3 = self.actor_loss(seq)
             metrics.update(self.actor_opt(actor_tape, actor_loss, self.actor))
-            metrics.update(**mets1, **mets2, **mets3, **mets4)
+            metrics.update(**mets3, **mets4)
             self.update_slow_target()  # Variables exist after first forward pass.
         return metrics
 

@@ -155,11 +155,13 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
     pbar = tqdm(range(config.offline_step))
     for _s in pbar:
       step.increment()
+      tf.py_function(lambda: agnt.tfstep.assign(
+        int(step), read_value=False), [], [])
       mets = train_agent(next(dataset), bc_func(bc_dataset))
-      des_str = f"actor_pure: {mets['actor_pure_loss'].numpy()} critic: {mets['critic_loss'].numpy()}"
-      if bc_dataset is not None:
-        des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy()} "
-      pbar.set_description(des_str)
+      # des_str = f"actor_pure: {mets['actor_pure_loss'].numpy()} critic: {mets['critic_loss'].numpy()}"
+      # if bc_dataset is not None:
+      #   des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy()} "
+      # pbar.set_description(des_str)
       # _ = agnt.report(next(dataset))
       [metrics[key].append(value) for key, value in mets.items()]
       if should_log(step):
@@ -171,11 +173,12 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
         # agnt.save(logdir / 'variables.pkl')
         agnt.save_sep(logdir)
         print("save param")
-        del replay
-        del dataset
-        replay = common.Replay(logdir / 'train_episodes', **config.replay)
-        dataset = iter(replay.dataset(**config.dataset))
-        print("update dataset")
+        
+        # del replay
+        # del dataset
+        # replay = common.Replay(logdir / 'train_episodes', **config.replay)
+        # dataset = iter(replay.dataset(**config.dataset))
+        # print("update dataset")
         
   else:
     while step < config.steps:

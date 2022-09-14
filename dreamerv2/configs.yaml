@@ -92,6 +92,7 @@ defaults:
   train_mcts_batch_size: 16
   train_mcts_n_playout: 20
   train_mcts_c_puct: 5
+  train_mcts_gen_traj_every: 20
   
 
 
