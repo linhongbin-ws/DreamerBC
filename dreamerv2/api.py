@@ -116,9 +116,10 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
   print('Create agent.')
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
   dataset = iter(replay.dataset(**config.dataset))
-  if config.bc_dir is not None:
+  if config.bc_dir is not '':
     print(config.bc_dir)
-    bc_replay = common.Replay(config.bc_dir, **config.replay)
+    bc_dir = pathlib.Path(config.bc_dir)
+    bc_replay = common.Replay(bc_dir, **config.replay)
     bc_dataset = iter(bc_replay.dataset(**config.dataset))
   else:
     bc_dataset = None

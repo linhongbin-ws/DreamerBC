@@ -70,11 +70,21 @@ class Agent(common.Module):
     metrics = {}
     state, outputs, mets = self.wm.train(data, state)
     metrics.update(mets)
+    if bc_data is not None:
+      state, bc_outputs, bc_mets = self.wm.train(data, state)
+      bc_mets = {'bc_'+ k: v for k,v in bc_mets.items()}  
+      metrics.update(bc_mets)
     # if self.tfstep > self.config.train_only_wm_steps or force: 
     start = outputs['post']
     reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
+    
     metrics.update(self._task_behavior.train(
         self.wm, start, data['is_terminal'], reward, bc_data))
+    
+    bc_behav_met = self._task_behavior.train(
+        self.wm, bc_outputs['post'], bc_data['is_terminal'], reward, bc_data=None)
+    metrics.update({'bctrain_'+ k: v for k,v in bc_behav_met.items()}  )
+    
     if self.config.expl_behavior != 'greedy':
       mets = self._expl_behavior.train(start, outputs, data)[-1]
       metrics.update({'expl_' + key: value for key, value in mets.items()})
@@ -306,7 +316,7 @@ class ActorCritic(common.Module):
         post, prior = world_model.rssm.observe(embed, data['action'], data['is_first'], state)
         feat = world_model.rssm.get_feat(post)
         action = self.actor(tf.stop_gradient(feat))
-        like = -tf.cast(action.log_prob(data['action']), tf.float32).mean()
+        like = -tf.cast(action.log_prob(data['action']), tf.float32).mean() * self.config.bc_grad_weight
         actor_loss += like
         mets3['actor_bc_loss'] = like
         

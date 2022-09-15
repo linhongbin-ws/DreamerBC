@@ -104,7 +104,9 @@ class MCTS(object):
         return acts, act_probs
 
     def update_with_move(self, last_move):
-        if last_move in self._root._children:
+        if last_move == -1:
+            self._root = None
+        elif last_move in self._root._children:
             self._root = self._root._children[last_move]
             self._root._parent = None
         else:

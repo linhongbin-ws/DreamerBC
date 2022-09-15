@@ -34,8 +34,8 @@ config = dv2.defaults.update({
   'jit': False,
   'actor_type': "AlphaZero",
   'train_only_wm_steps': 0,
-  'train_mcts_c_puct': 2,
-  'train_mcts_n_playout': 40,
+  'train_mcts_c_puct': 3,
+  'train_mcts_n_playout': 80,
 }).parse_flags()
 
 

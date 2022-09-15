@@ -33,8 +33,11 @@ defaults:
   # new feature
   offline_step: 20000000
   istrain: False
-  bc_dir: null
+  bc_dir: ''
   train_only_wm_steps: 0
+  bc_grad_weight: 0
+
+
 
   # Agent
   clip_rewards: tanh

@@ -4,6 +4,7 @@ import argparse
 
 
 config = dv2.defaults.update({
+  'bc_dir': './data/ambf_np_green_async/train_episodes/oracle',
   'logdir': './data/ambf_np_green_async',
   'log_every': 1e3,
   'train_every': 2,
