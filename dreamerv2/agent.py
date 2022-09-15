@@ -80,10 +80,10 @@ class Agent(common.Module):
     
     metrics.update(self._task_behavior.train(
         self.wm, start, data['is_terminal'], reward, bc_data))
-    
-    bc_behav_met = self._task_behavior.train(
-        self.wm, bc_outputs['post'], bc_data['is_terminal'], reward, bc_data=None)
-    metrics.update({'bctrain_'+ k: v for k,v in bc_behav_met.items()}  )
+    if bc_data is not None:
+      bc_behav_met = self._task_behavior.train(
+          self.wm, bc_outputs['post'], bc_data['is_terminal'], reward, bc_data=None)
+      metrics.update({'bctrain_'+ k: v for k,v in bc_behav_met.items()}  )
     
     if self.config.expl_behavior != 'greedy':
       mets = self._expl_behavior.train(start, outputs, data)[-1]
