@@ -4,8 +4,8 @@ import argparse
 
 
 config = dv2.defaults.update({
-  'bc_dir': './data/ambf_np_green_async/train_episodes/oracle',
-  'logdir': './data/ambf_np_green_async',
+  'bc_dir': './data/ambf_np_green_sparse_async/train_episodes/oracle',
+  'logdir': './data/ambf_np_green_sparse_async',
   'log_every': 1e3,
   'train_every': 2,
   'loss_scales.kl': 1.0,
@@ -15,7 +15,6 @@ config = dv2.defaults.update({
   'decoder': {'mlp_keys': '$^', 'cnn_keys': 'image'},
   'action_repeat': 1,
   'eval_every': 2e3,
-  'prefill': 100,
   'pretrain': 100,
   'clip_rewards': 'identity',
   'pred_discount': True,
@@ -27,12 +26,13 @@ config = dv2.defaults.update({
   'critic_opt.lr': 8e-7,
   'actor_ent': 1e-4,
   'kl.free': 1.0,
-  'prefill': 1000,
+  'prefill': 30000,
   'prefill_agent': 'oracle',
   'time_limit': 50,
   'replay': {'capacity': 2e6, 'ongoing': False, 'minlen': 16, 'maxlen': 50, 'prioritize_ends': True},
   'dataset': {'batch': 16, 'length': 17},
   'jit': True,
+  'reward_norm_skip': True,
 }).parse_flags()
 
 

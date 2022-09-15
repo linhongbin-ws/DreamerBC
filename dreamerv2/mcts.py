@@ -181,7 +181,10 @@ class AlphaZero(common.Module):
             self._target_critic = self.critic
         self.actor_opt = common.Optimizer('actor', **self.config.actor_opt)
         self.critic_opt = common.Optimizer('critic', **self.config.critic_opt)
-        self.rewnorm = common.StreamNorm(**self.config.reward_norm)
+        if self.config.reward_norm_skip:
+            self.rewnorm = None
+        else:
+            self.rewnorm = common.StreamNorm(**self.config.reward_norm)
         
         self.mcts_planner = MCTS(value_func=self.critic, 
                                  actor_func=self.actor, 
@@ -218,8 +221,9 @@ class AlphaZero(common.Module):
             _is_terminal = is_terminal[i:i+1,j:j+1]
             seq = world_model.imagine(_policy, _start, _is_terminal, hor, actor_type='MCTS')
             reward = reward_fn(seq)
-            seq['reward'], mets1 = self.rewnorm(reward)
-            mets1 = {f'reward_{k}': v for k, v in mets1.items()}
+            if self.rewnorm is not None:
+                seq['reward'], mets1 = self.rewnorm(reward)
+                mets1 = {f'reward_{k}': v for k, v in mets1.items()}
             
             target, mets2 = self.target(seq)
                     # if seqs is None:

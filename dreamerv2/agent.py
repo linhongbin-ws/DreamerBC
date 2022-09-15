@@ -289,7 +289,10 @@ class ActorCritic(common.Module):
       self._target_critic = self.critic
     self.actor_opt = common.Optimizer('actor', **self.config.actor_opt)
     self.critic_opt = common.Optimizer('critic', **self.config.critic_opt)
-    self.rewnorm = common.StreamNorm(**self.config.reward_norm)
+    if self.config.reward_norm_skip:
+      self.rewnorm = None
+    else:
+      self.rewnorm = common.StreamNorm(**self.config.reward_norm)
 
   def train(self, world_model, start, is_terminal, reward_fn, bc_data, **kwargs):
     metrics = {}
@@ -302,8 +305,9 @@ class ActorCritic(common.Module):
     with tf.GradientTape() as actor_tape:
       seq = world_model.imagine(self.actor, start, is_terminal, hor)
       reward = reward_fn(seq)
-      seq['reward'], mets1 = self.rewnorm(reward)
-      mets1 = {f'reward_{k}': v for k, v in mets1.items()}
+      if self.rewnorm is not None:
+        seq['reward'], mets1 = self.rewnorm(reward)
+        mets1 = {f'reward_{k}': v for k, v in mets1.items()}
       target, mets2 = self.target(seq)
       # if bc_data is None:
       actor_loss, mets3 = self.actor_loss(seq, target)
