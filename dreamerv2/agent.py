@@ -308,6 +308,9 @@ class ActorCritic(common.Module):
       if self.rewnorm is not None:
         seq['reward'], mets1 = self.rewnorm(reward)
         mets1 = {f'reward_{k}': v for k, v in mets1.items()}
+        metrics.update(**mets1)
+      else:
+         seq['reward'] = reward
       target, mets2 = self.target(seq)
       # if bc_data is None:
       actor_loss, mets3 = self.actor_loss(seq, target)
@@ -328,7 +331,7 @@ class ActorCritic(common.Module):
       critic_loss, mets4 = self.critic_loss(seq, target)
     metrics.update(self.actor_opt(actor_tape, actor_loss, self.actor))
     metrics.update(self.critic_opt(critic_tape, critic_loss, self.critic))
-    metrics.update(**mets1, **mets2, **mets3, **mets4)
+    metrics.update(**mets2, **mets3, **mets4)
     self.update_slow_target()  # Variables exist after first forward pass.
     return metrics
 

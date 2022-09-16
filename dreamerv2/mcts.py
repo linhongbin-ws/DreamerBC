@@ -224,6 +224,9 @@ class AlphaZero(common.Module):
             if self.rewnorm is not None:
                 seq['reward'], mets1 = self.rewnorm(reward)
                 mets1 = {f'reward_{k}': v for k, v in mets1.items()}
+                metrics.update(**mets1) 
+            else:
+                seq['reward'] = reward
             
             target, mets2 = self.target(seq)
                     # if seqs is None:
@@ -235,7 +238,7 @@ class AlphaZero(common.Module):
             # target = tf.concat(targets, 1)
             self.train_seq_buffer.append((seq, target))
             print(f"traj buffer size:{len(self.train_seq_buffer)}")
-            metrics.update(**mets1, **mets2)
+            metrics.update(**mets2)
             
         # bz = is_terminal.shape[0] * is_terminal.shape[1]
         bz = self.config.train_mcts_batch_size
