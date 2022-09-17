@@ -34,6 +34,7 @@ config = dv2.defaults.update({
   'dataset': {'batch': 16, 'length': 17},
   'jit': True,
   'reward_norm_skip': True,
+  'expl_noise': 0.1
 }).parse_flags()
 
 

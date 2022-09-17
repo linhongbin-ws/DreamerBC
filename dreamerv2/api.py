@@ -5,6 +5,8 @@ import pathlib
 import re
 import sys
 import warnings
+import tracemalloc
+import linecache
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger().setLevel('ERROR')
@@ -35,7 +37,31 @@ import tensorflow as tf
 for gpu in tf.config.experimental.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(gpu, True)
 
+def display_top(snapshot, key_type='lineno', limit=3):
+  snapshot = snapshot.filter_traces((
+      tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+      tracemalloc.Filter(False, "<unknown>"),
+  ))
+  top_stats = snapshot.statistics(key_type)
 
+  print("Top %s lines" % limit)
+  for index, stat in enumerate(top_stats[:limit], 1):
+      frame = stat.traceback[0]
+      # replace "/path/to/module/file.py" with "module/file.py"
+      filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+      print("#%s: %s:%s: %.1f KiB"
+            % (index, filename, frame.lineno, stat.size / 1024))
+      line = linecache.getline(frame.filename, frame.lineno).strip()
+      if line:
+          print('    %s' % line)
+
+  other = top_stats[limit:]
+  if other:
+      size = sum(stat.size for stat in other)
+      print("%s other: %.1f KiB" % (len(other), size / 1024))
+  total = sum(stat.size for stat in top_stats)
+  print("Total allocated size: %.1f KiB" % (total / 1024))
+    
 def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
   tf.config.experimental_run_functions_eagerly(not config.jit)
   logdir = pathlib.Path(config.logdir).expanduser()
@@ -175,11 +201,20 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
         agnt.save_sep(logdir)
         print("save param")
         
-        del replay
+        
+        ## facing serious memory leak, ref to https://github.com/tensorflow/tensorflow/issues/37653
+        _update = False
+        import psutil
+
+        # used_mem = psutil.virtual_memory().used
+        # print("used memory: {} Mb".format(used_mem / 1024 / 1024))
         del dataset
+        replay.cleanup()
         replay = common.Replay(logdir / 'train_episodes', **config.replay)
         dataset = iter(replay.dataset(**config.dataset))
-        print("update dataset")
+        # snapshot = tracemalloc.take_snapshot()
+        # display_top(snapshot)
+
         
   else:
     while step < config.steps:
