@@ -202,18 +202,18 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
         print("save param")
         
         
-        ## facing serious memory leak, ref to https://github.com/tensorflow/tensorflow/issues/37653
-        _update = False
-        import psutil
+        # ## facing serious memory leak, ref to https://github.com/tensorflow/tensorflow/issues/37653
+        # _update = False
+        # import psutil
 
-        # used_mem = psutil.virtual_memory().used
-        # print("used memory: {} Mb".format(used_mem / 1024 / 1024))
-        del dataset
-        replay.cleanup()
-        replay = common.Replay(logdir / 'train_episodes', **config.replay)
-        dataset = iter(replay.dataset(**config.dataset))
-        # snapshot = tracemalloc.take_snapshot()
-        # display_top(snapshot)
+        # # used_mem = psutil.virtual_memory().used
+        # # print("used memory: {} Mb".format(used_mem / 1024 / 1024))
+        # del dataset
+        # replay.cleanup()
+        # replay = common.Replay(logdir / 'train_episodes', **config.replay)
+        # dataset = iter(replay.dataset(**config.dataset))
+        # # snapshot = tracemalloc.take_snapshot()
+        # # display_top(snapshot)
 
         
   else:
