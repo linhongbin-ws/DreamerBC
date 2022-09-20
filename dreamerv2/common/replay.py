@@ -63,9 +63,9 @@ class Replay:
     self._enforce_limit()
 
   def dataset(self, batch, length):
-    if not hasattr(tf.compat.v1.get_default_graph(), '_py_funcs_used_in_graph'):
-      tf.compat.v1.get_default_graph()._py_funcs_used_in_graph = []
-    py_func_set_before = set(tf.compat.v1.get_default_graph()._py_funcs_used_in_graph)
+    # if not hasattr(tf.compat.v1.get_default_graph(), '_py_funcs_used_in_graph'):
+    #   tf.compat.v1.get_default_graph()._py_funcs_used_in_graph = []
+    # py_func_set_before = set(tf.compat.v1.get_default_graph()._py_funcs_used_in_graph)
     example = next(iter(self._generate_chunks(length)))
     dataset = tf.data.Dataset.from_generator(
         lambda: self._generate_chunks(length),
@@ -74,14 +74,14 @@ class Replay:
     dataset = dataset.batch(batch, drop_remainder=True)
     dataset = dataset.prefetch(5)
     
-    py_func_set_after = set(tf.compat.v1.get_default_graph()._py_funcs_used_in_graph) - py_func_set_before
-    self.py_func_set_to_cleanup |= py_func_set_after
+    # py_func_set_after = set(tf.compat.v1.get_default_graph()._py_funcs_used_in_graph) - py_func_set_before
+    # self.py_func_set_to_cleanup |= py_func_set_after
     return dataset
   
-  def cleanup(self):
-    new_py_funcs = set(tf.compat.v1.get_default_graph()._py_funcs_used_in_graph) - self.py_func_set_to_cleanup
-    tf.compat.v1.get_default_graph()._py_funcs_used_in_graph = list(new_py_funcs)
-    self.py_func_set_to_cleanup = set()
+  # def cleanup(self):
+  #   new_py_funcs = set(tf.compat.v1.get_default_graph()._py_funcs_used_in_graph) - self.py_func_set_to_cleanup
+  #   tf.compat.v1.get_default_graph()._py_funcs_used_in_graph = list(new_py_funcs)
+  #   self.py_func_set_to_cleanup = set()
 
   def _generate_chunks(self, length):
     sequence = self._sample_sequence()

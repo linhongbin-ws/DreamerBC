@@ -68,10 +68,11 @@ class Agent(common.Module):
   @tf.function
   def train(self, data,  bc_data=None, state=None, force=False):
     metrics = {}
-    state, outputs, mets = self.wm.train(data, state)
+    _state = state if self.config.train_carrystate else None   
+    state, outputs, mets = self.wm.train(data, _state)
     metrics.update(mets)
     if bc_data is not None:
-      state, bc_outputs, bc_mets = self.wm.train(data, state)
+      _, bc_outputs, bc_mets = self.wm.train(data, None)
       bc_mets = {'bc_'+ k: v for k,v in bc_mets.items()}  
       metrics.update(bc_mets)
     # if self.tfstep > self.config.train_only_wm_steps or force: 

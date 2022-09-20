@@ -78,7 +78,8 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
       common.TensorBoardOutput(str(offlinelogdir)),
   ]
   replay = common.Replay(logdir / 'train_episodes', **config.replay)
-  step = common.Counter(replay.stats['total_steps'])
+  # step = common.Counter(replay.stats['total_steps'])
+  step = common.Counter(0) # step is not accurate after async
   logger = common.Logger(step, outputs, multiplier=config.action_repeat)
   metrics = collections.defaultdict(list)
 
@@ -196,6 +197,9 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
           logger.scalar(name, np.array(values, np.float64).mean())
           metrics[name].clear()
         logger.add(agnt.report(next(dataset)))
+        if bc_dataset is not None:
+          bc_report = agnt.report(next(bc_dataset))
+          logger.add({'bc_report_'+k: v for k,v in bc_report.items()})
         logger.write(fps=True)
         # agnt.save(logdir / 'variables.pkl')
         agnt.save_sep(logdir)

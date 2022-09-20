@@ -37,6 +37,7 @@ defaults:
   train_only_wm_steps: 0
   bc_grad_weight: 0
   reward_norm_skip: False
+  train_carrystate: False
 
 
 
