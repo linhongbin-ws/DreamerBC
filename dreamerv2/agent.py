@@ -159,9 +159,18 @@ class WorldModel(common.Module):
       out = head(inp)
       dists = out if isinstance(out, dict) else {name: out}
       for key, dist in dists.items():
-        like = tf.cast(dist.log_prob(data[key]), tf.float32)
-        likes[key] = like
-        losses[key] = -like.mean()
+        if key.find('image_c') == -1:
+          like = tf.cast(dist.log_prob(data[key]), tf.float32)
+          likes[key] = like
+          losses[key] = -like.mean()
+        else:
+          _i = int(key[7:])
+          if self.config.grad_extra_image_channel_scale[_i] > 0:
+            like = tf.cast(dist.log_prob(data['image'][:,:,:,:,_i]), tf.float32)\
+                          * self.config.grad_extra_image_channel_scale[_i]
+            likes[key] = like
+            losses[key] = -like.mean()
+            
     model_loss = sum(
         self.config.loss_scales.get(k, 1.0) * v for k, v in losses.items())
     # if quant_loss is not None:

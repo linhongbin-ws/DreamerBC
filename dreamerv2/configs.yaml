@@ -31,13 +31,15 @@ defaults:
   jit: True
 
   # new feature
+  is_pure_train: False
+  is_pure_datagen: False
   offline_step: 20000000
-  istrain: False
   bc_dir: ''
   train_only_wm_steps: 0
   bc_grad_weight: 0
   reward_norm_skip: False
   train_carrystate: False
+  grad_extra_image_channel_scale: [0,0,0]
 
 
 

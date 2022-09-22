@@ -62,11 +62,12 @@ def display_top(snapshot, key_type='lineno', limit=3):
   total = sum(stat.size for stat in top_stats)
   print("Total allocated size: %.1f KiB" % (total / 1024))
     
-def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
+def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False, skip_gym_wrap=False):
+  assert not (is_pure_train and is_pure_datagen)
   tf.config.experimental_run_functions_eagerly(not config.jit)
   logdir = pathlib.Path(config.logdir).expanduser()
   logdir.mkdir(parents=True, exist_ok=True)
-  offlinelogdir = logdir / 'offline' if is_train else logdir
+  offlinelogdir = logdir / 'offline' if is_pure_train else logdir
   offlinelogdir.mkdir(parents=True, exist_ok=True)
   config.save(logdir / 'config.yaml')
   print(config, '\n')
@@ -78,8 +79,8 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
       common.TensorBoardOutput(str(offlinelogdir)),
   ]
   replay = common.Replay(logdir / 'train_episodes', **config.replay)
-  # step = common.Counter(replay.stats['total_steps'])
-  step = common.Counter(0) # step is not accurate after async
+  step = common.Counter(0) if is_pure_train else common.Counter(replay.stats['total_steps'])
+ 
   logger = common.Logger(step, outputs, multiplier=config.action_repeat)
   metrics = collections.defaultdict(list)
 
@@ -116,7 +117,8 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
       env = common.NormalizeAction(env)
     env = common.TimeLimit(env, config.time_limit)
 
-  if not is_train:
+  if not is_pure_train:
+    
     replay = common.Replay(logdir / 'train_episodes' / config.prefill_agent, **config.replay)
     driver = common.Driver([env])
     driver.on_episode(per_episode)
@@ -154,32 +156,11 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
   train_agent = common.CarryOverState(agnt.train)
   train_agent(next(dataset), bc_func(bc_dataset))
   agnt.load_sep(logdir)
-  # if (logdir / 'variables.pkl').exists():
-  #   print(f"load {str(logdir)}")
-  #   agnt.load(logdir / 'variables.pkl')
-  # else:
-  #   pass
-    # if is_train:
-    #   print('Pretrain agent.')
-    #   for _ in range(config.pretrain):
-    #     train_agent(next(dataset))
   policy = lambda *args: agnt.policy(
       *args, mode='explore' if should_expl(step) else 'train')
 
-  # def train_step(tran, worker):
-  #   if should_train(step):
-  #     for _ in range(config.train_steps):
-  #       mets = train_agent(next(dataset))
-  #       [metrics[key].append(value) for key, value in mets.items()]
-  #   if should_log(step):
-  #     for name, values in metrics.items():
-  #       logger.scalar(name, np.array(values, np.float64).mean())
-  #       metrics[name].clear()
-  #     logger.add(agnt.report(next(dataset)))
-  #     logger.write(fps=True)
-  # driver.on_step(train_step)
 
-  if is_train:
+  if is_pure_train:
     pbar = tqdm(range(config.offline_step))
     for _s in pbar:
       step.increment()
@@ -221,12 +202,30 @@ def train(env, config, outputs=None, is_train=True, skip_gym_wrap=False):
 
         
   else:
+    if not is_pure_datagen:
+      def train_step(tran, worker):
+        if should_train(step):
+          for _ in tqdm(range(config.train_steps)):
+            mets = train_agent(next(dataset), bc_func(bc_dataset))
+            [metrics[key].append(value) for key, value in mets.items()]
+        if should_log(step):
+          for name, values in metrics.items():
+            logger.scalar(name, np.array(values, np.float64).mean())
+            metrics[name].clear()
+            logger.add(agnt.report(next(dataset)))
+          if bc_dataset is not None:
+            bc_report = agnt.report(next(bc_dataset))
+            logger.add({'bc_report_'+k: v for k,v in bc_report.items()})
+          logger.write(fps=True)
+          agnt.save_sep(logdir)
+          print("save param")
+      driver.on_step(train_step)
     while step < config.steps:
       # logger.write()
       driver(policy, steps=config.eval_every)
       logger.add(agnt.report(next(dataset)))
       logger.write(fps=True)
-      print("reload param")
-      # agnt.load(logdir / 'variables.pkl')
-      agnt.load_sep(logdir)
+      if is_pure_datagen:
+        print("reload param")
+        agnt.load_sep(logdir)
 

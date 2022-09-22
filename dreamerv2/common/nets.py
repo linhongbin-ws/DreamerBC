@@ -284,6 +284,10 @@ class Decoder(common.Module):
     dists = {
         key: tfd.Independent(tfd.Normal(mean, 1), 3)
         for (key, shape), mean in zip(channels.items(), means)}
+    
+    # add extra gradient flow
+    for i in range(channels['image']):
+      dists['image_c'+str(i)] = tfd.Independent(tfd.Normal(means[0][:,:,:,:,i], 1), 2)
     return dists
 
   def _mlp(self, features):

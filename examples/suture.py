@@ -4,10 +4,9 @@ import argparse
 
 
 config = dv2.defaults.update({
-  'bc_dir': './data/ambf_np_green_sparse_async/train_episodes/oracle',
-  'logdir': './data/ambf_np_green_sparse_async',
-  'log_every': 1e3,
-  'train_every': 2,
+  'bc_dir': './data/ambf_np_seg_sparse/train_episodes/oracle',
+  'logdir': './data/ambf_np_seg_sparse',
+  'log_every': 4e2,
   # 'loss_scales.kl': 1.0,
   
   'discount': 0.999,
@@ -18,33 +17,32 @@ config = dv2.defaults.update({
   'eval_every': 2e3,
   'pretrain': 100,
   'clip_rewards': 'identity',
-  # 'pred_discount': True,
   # 'grad_heads': ['decoder', 'reward','discount'],
   # 'rssm': {'hidden': 200, 'deter': 200, 'stoch': 32, 'discrete': 32},
-  'model_opt.lr': 2e-4,
+  'model_opt.lr': 1e-4,
   'actor_opt.lr': 4e-5,
-  # 'actor_opt.clip': 1e3,
   'critic_opt.lr': 1e-4,
   'actor_ent': 2e-3,
-  # 'kl.free': 1.0,
-  'prefill': 0,
-  # 'prefill': 30000,
+  'prefill': 1e4,
   'prefill_agent': 'oracle',
   'time_limit': 50,
   'replay': {'capacity': 2e6, 'ongoing': False, 'minlen': 17, 'maxlen': 17, 'prioritize_ends': False},
   'dataset': {'batch': 16, 'length': 17},
   'reward_norm_skip': True,
-  # 'expl_noise': 0.1
+  # 'grad_extra_image_channel_scale': [0,3,0], # rgb, emphasis green
+  'train_every': 50,
+  'train_steps': 40,
   
-  #### debug
+  # #### debug
   # 'jit': False,
   # 'replay.capacity': 2e4,
+  # 'log_every': 10,
+  # 'prefill': 0,
 }).parse_flags()
 
 
 
-
-env = make_env("ambf_needle_picking_64x64_discrete")
-dv2.train(env, config, is_train=config.istrain)
+env = make_env('ambf_needle_picking_64x64_discrete',is_segment_filter=True)
+dv2.train(env, config, is_pure_train=config.is_pure_train, is_pure_datagen=config.is_pure_datagen)
 
 env.close()
