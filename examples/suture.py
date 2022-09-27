@@ -4,8 +4,12 @@ import argparse
 
 
 config = dv2.defaults.update({
-  'bc_dir': './data/ambf_np_seg_sparse/train_episodes/oracle',
-  'logdir': './data/ambf_np_seg_sparse',
+  # 'bc_dir': './data/ambf_np_seg_depth_sparse/train_episodes/oracle',
+  # 'logdir': './data/ambf_np_seg_depth_sparse',
+
+  'bc_dir': './data/ambf_np_seg_depth_gripperstate_sparse/train_episodes/oracle',
+  'logdir': './data/ambf_np_seg_depth_gripperstate_sparse',
+  
   'log_every': 4e2,
   # 'loss_scales.kl': 1.0,
   
@@ -20,8 +24,8 @@ config = dv2.defaults.update({
   # 'grad_heads': ['decoder', 'reward','discount'],
   # 'rssm': {'hidden': 200, 'deter': 200, 'stoch': 32, 'discrete': 32},
   'model_opt.lr': 1e-4,
-  'actor_opt.lr': 4e-5,
-  'critic_opt.lr': 1e-4,
+  'actor_opt.lr': 4e-6,
+  'critic_opt.lr': 1e-5,
   'actor_ent': 2e-3,
   'prefill': 1e4,
   'prefill_agent': 'oracle',
@@ -37,12 +41,12 @@ config = dv2.defaults.update({
   # 'jit': False,
   # 'replay.capacity': 2e4,
   # 'log_every': 10,
-  # 'prefill': 0,
+  # 'prefill': 100,
 }).parse_flags()
 
 
 
-env = make_env('ambf_needle_picking_64x64_discrete',is_segment_filter=True)
+env = make_env('ambf_needle_picking_64x64_discrete',is_segment_filter=True, is_gripper_state_image=True)
 dv2.train(env, config, is_pure_train=config.is_pure_train, is_pure_datagen=config.is_pure_datagen)
 
 env.close()
