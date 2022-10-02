@@ -185,7 +185,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
   else:
     bc_dataset = None
   bc_func = lambda dataset: next(dataset) if dataset is not None else None
-  train_agent = common.CarryOverState(agnt.train)
+  train_agent = common.CarryOverState(agnt.train, is_bc=bc_dataset is not None)
   train_agent(next(train_dataset), bc_func(bc_dataset))
   agnt.load_sep(logdir)
   train_policy = lambda *args: agnt.policy(
@@ -259,11 +259,13 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           print("save param")
       train_driver.on_step(train_step)
       
-      eval_stat = {'average_scores':0, 'sucess_eps_count':0, 'sucess_eps_rate':0}
+      eval_stat = {'average_scores':0, 'sucess_eps_count':0, 'sucess_eps_rate':0, 'eps_cnt':0}
       def eval_sucess_count(ep):
         score = float(ep['reward'].astype(np.float64).sum())
+        eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
         eval_stat['sucess_eps_count'] += int(score>0) 
+        print(f"sucess/total: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']})")
       eval_driver.on_episode(eval_sucess_count)
     while step < config.steps:
 
@@ -278,6 +280,9 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       eval_stat['sucess_eps_rate'] = eval_stat['sucess_eps_count']/config.eval_eps
       logger.add(eval_stat, prefix='eval')
       logger.add(agnt.report(next(eval_dataset)), prefix='eval')
+      print("==============")
+      print(f"# eval rate: {eval_stat['sucess_eps_rate']} !!")
+      print(f"# eval average return: {eval_stat['average_scores']}")
       if eval_stat['sucess_eps_rate'] >= config.save_sucess_eps_rate:
         _model_dir = str(step.value) + '_'+str(int(eval_stat['sucess_eps_rate']*100))+'_percent'
         agnt.save_sep(logdir / 'model' / _model_dir)
@@ -292,6 +297,6 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
 
       logger.write(fps=True)
       if is_pure_datagen:
-        print("reload param")
+        print("reload param") 
         agnt.load_sep(logdir)
 

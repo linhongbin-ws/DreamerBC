@@ -216,9 +216,9 @@ class Timer:
 
 class CarryOverState:
 
-  def __init__(self, fn):
+  def __init__(self, fn, is_bc=False):
     self._fn = fn
-    self._state = None
+    self._state = (None, None) if is_bc else None
 
   def __call__(self, *args):
     self._state, out = self._fn(*args, state=self._state)

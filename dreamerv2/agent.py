@@ -68,11 +68,16 @@ class Agent(common.Module):
   @tf.function
   def train(self, data,  bc_data=None, state=None, force=False):
     metrics = {}
-    _state = state if self.config.train_carrystate else None   
+    if bc_data is None:
+      _state = state if self.config.train_carrystate else None
+    else:
+      _state = state[0] if self.config.train_carrystate else None
+      _bc_state = state[1] if self.config.train_carrystate else None
     state, outputs, mets = self.wm.train(data, _state)
     metrics.update(mets)
+    
     if bc_data is not None:
-      _, bc_outputs, bc_mets = self.wm.train(data, None)
+      bc_state, bc_outputs, bc_mets = self.wm.train(bc_data, _bc_state)
       bc_mets = {'bc_'+ k: v for k,v in bc_mets.items()}  
       metrics.update(bc_mets)
     # if self.tfstep > self.config.train_only_wm_steps or force: 
@@ -80,16 +85,21 @@ class Agent(common.Module):
     reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
     
     metrics.update(self._task_behavior.train(
-        self.wm, start, data['is_terminal'], reward, bc_data))
-    if bc_data is not None:
+        self.wm, start, data['is_terminal'], reward, bc_data=bc_data, bc_state=_bc_state))
+    if bc_data is not None and self.config.bc_data_agent_retrain:
       bc_behav_met = self._task_behavior.train(
-          self.wm, bc_outputs['post'], bc_data['is_terminal'], reward, bc_data=None)
-      metrics.update({'bctrain_'+ k: v for k,v in bc_behav_met.items()}  )
+          self.wm, bc_outputs['post'], bc_data['is_terminal'], reward, bc_data=bc_data, bc_state=_bc_state)
+      metrics.update({'bc_agent_retrain_'+ k: v for k,v in bc_behav_met.items()}  )
     
     if self.config.expl_behavior != 'greedy':
       mets = self._expl_behavior.train(start, outputs, data)[-1]
       metrics.update({'expl_' + key: value for key, value in mets.items()})
-    return state, metrics
+    
+    if bc_data is None:
+      out_state = state
+    else:
+      out_state = (state, bc_state)
+    return out_state, metrics
 
   @tf.function
   def report(self, data):
@@ -304,7 +314,7 @@ class ActorCritic(common.Module):
     else:
       self.rewnorm = common.StreamNorm(**self.config.reward_norm)
 
-  def train(self, world_model, start, is_terminal, reward_fn, bc_data, **kwargs):
+  def train(self, world_model, start, is_terminal, reward_fn, bc_data=None, bc_state=None,**kwargs):
     metrics = {}
     hor = self.config.imag_horizon
     # The weights are is_terminal flags for the imagination start states.
@@ -326,14 +336,13 @@ class ActorCritic(common.Module):
       actor_loss, mets3 = self.actor_loss(seq, target)
       mets3['actor_pure_loss'] = actor_loss
       # else:
-      if bc_data is not None:
+      if bc_data is not None and self.config.bc_loss:
         data = world_model.preprocess(bc_data)
         embed = world_model.encoder(data)
-        state = None
-        post, prior = world_model.rssm.observe(embed, data['action'], data['is_first'], state)
+        post, prior = world_model.rssm.observe(embed, data['action'], data['is_first'], state=bc_state)
         feat = world_model.rssm.get_feat(post)
-        action = self.actor(tf.stop_gradient(feat))
-        like = -tf.cast(action.log_prob(data['action']), tf.float32).mean() * self.config.bc_grad_weight
+        action = self.actor(tf.stop_gradient(feat[:,self.config.bc_skip_start_step_num:-1,:])) # action is prev action, needs to shift 1 
+        like = -tf.cast(action.log_prob(data['action'][:,1+self.config.bc_skip_start_step_num:,:]), tf.float32).mean() * self.config.bc_grad_weight
         actor_loss += like
         mets3['actor_bc_loss'] = like
         
