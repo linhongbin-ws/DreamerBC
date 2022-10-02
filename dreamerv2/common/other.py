@@ -37,7 +37,7 @@ class OracleAgent:
     self.env = env
 
   def __call__(self, obs, state=None, mode=None):
-    print("call get oracle")
+    # print("call get oracle")
     _action = self.env.get_oracle_action()
     if hasattr(self.act_space, 'n'):
       _a = np.zeros(self.act_space.n)

@@ -36,10 +36,11 @@ defaults:
   offline_step: 20000000
   bc_dir: ''
   train_only_wm_steps: 0
-  bc_grad_weight: 0
+  bc_grad_weight: 0.0
   reward_norm_skip: False
   train_carrystate: False
   grad_extra_image_channel_scale: [0,0,0]
+  save_sucess_eps_rate: 0.5
 
 
 

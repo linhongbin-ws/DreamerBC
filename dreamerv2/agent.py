@@ -427,4 +427,5 @@ class ActorCritic(common.Module):
             self.config.slow_target_fraction)
         for s, d in zip(self.critic.variables, self._target_critic.variables):
           d.assign(mix * s + (1 - mix) * d)
+        tf.print("[info] slow critic update!")
       self._updates.assign_add(1)
