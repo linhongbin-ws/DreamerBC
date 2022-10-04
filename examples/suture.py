@@ -45,10 +45,10 @@ config = dv2.defaults.update({
   # 'grad_extra_image_channel_scale': [0,3,0], # rgb, emphasis green
   'train_every': 50,
   'train_steps': 50,
-  'eval_eps': 50,
+  'eval_eps': 58,
   'eval_every': 8e2,
   'bc_grad_weight': 10,
-  'save_sucess_eps_rate': 0.5,
+  'save_sucess_eps_rate': 0.7,
   'bc_skip_start_step_num': 2,
   # 'slow_target_update': 150
   # #### debug

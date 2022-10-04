@@ -259,13 +259,15 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           print("save param")
       train_driver.on_step(train_step)
       
-      eval_stat = {'average_scores':0, 'sucess_eps_count':0, 'sucess_eps_rate':0, 'eps_cnt':0}
+      eval_stat = {'average_scores':0, 'sucess_eps_count':0, 'sucess_eps_rate':0, 'eps_cnt':0, 'filter_cases_cnt': 0}
       def eval_sucess_count(ep):
         score = float(ep['reward'].astype(np.float64).sum())
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
-        eval_stat['sucess_eps_count'] += int(score>0) 
-        print(f"sucess/total: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']})")
+        eval_stat['sucess_eps_count'] += int(score>0)
+        if len(ep['reward']) <3:
+          eval_stat['filter_cases_cnt'] +=1
+        print(f"sucess/total/filter_cases: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']})")
       eval_driver.on_episode(eval_sucess_count)
     while step < config.steps:
 
@@ -278,10 +280,12 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       eval_driver(eval_policy, episodes=config.eval_eps)
       eval_stat['average_scores'] = eval_stat['average_scores']/config.eval_eps
       eval_stat['sucess_eps_rate'] = eval_stat['sucess_eps_count']/config.eval_eps
+      eval_stat['sucess_eps_filter_rate'] = eval_stat['sucess_eps_count']/(config.eval_eps-eval_stat['filter_cases_cnt'])
       logger.add(eval_stat, prefix='eval')
       logger.add(agnt.report(next(eval_dataset)), prefix='eval')
       print("==============")
       print(f"# eval rate: {eval_stat['sucess_eps_rate']} !!")
+      print(f"# eval filter rate: {eval_stat['sucess_eps_filter_rate']} !!")
       print(f"# eval average return: {eval_stat['average_scores']}")
       if eval_stat['sucess_eps_rate'] >= config.save_sucess_eps_rate:
         _model_dir = str(step.value) + '_'+str(int(eval_stat['sucess_eps_rate']*100))+'_percent'
