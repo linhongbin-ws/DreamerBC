@@ -7,8 +7,8 @@ config = dv2.defaults.update({
   # 'bc_dir': './data/ambf_np_seg_depth_sparse/train_episodes/oracle',
   # 'logdir': './data/ambf_np_seg_depth_sparse',
 
-  'bc_dir': './data/ambf_np_seg_depth_gripperstate2/train_episodes/oracle',
-  'logdir': './data/ambf_np_seg_depth_gripperstate2',
+  'bc_dir': './data/ambf_np_seg_depth_gripperstate5/train_episodes/oracle',
+  'logdir': './data/ambf_np_seg_depth_gripperstate5',
   
   'log_every': 4e2,
   # 'loss_scales.kl': 1.0,
@@ -25,16 +25,17 @@ config = dv2.defaults.update({
   'clip_rewards': 'identity',
   # 'grad_heads': ['decoder', 'reward','discount'],
   # 'rssm': {'hidden': 200, 'deter': 200, 'stoch': 32, 'discrete': 32},
-  'model_opt.lr': 1e-4,
+  # 'model_opt.lr': 1e-4,
+  'model_opt.lr': 2e-4,
   # 'actor_opt.lr': 4e-5,
   # 'actor_opt.lr': 0.0,
   'critic_opt.lr': 4e-5,
   'actor_opt.lr': 2e-5,
   # 'critic_opt.lr': 0,
   # 'critic.layers': 5,
-  # 'actor_ent': 2e-3,
+  'actor_ent': 2e-4,
   # 'actor_ent': 2e-7,
-  'actor_ent': 1e-7,
+  # 'actor_ent': 1e-7,
   'prefill': 8e3,
   # 'prefill': 1e1,
   'prefill_agent': 'oracle',
@@ -47,7 +48,9 @@ config = dv2.defaults.update({
   'train_steps': 50,
   'eval_eps': 58,
   'eval_every': 8e2,
-  'bc_grad_weight': 10,
+  # 'bc_grad_weight': 4,
+  # 'bc_grad_weight': 'linear(1e1,1e-2,3.5e4)',
+  'bc_grad_weight': 'linear(1e1,5e0,3.5e4)',
   'save_sucess_eps_rate': 0.7,
   'bc_skip_start_step_num': 2,
   # 'slow_target_update': 150
@@ -56,7 +59,7 @@ config = dv2.defaults.update({
   # 'replay.capacity': 2e4,
   # 'log_every': 200,
   # 'eval_eps': 1,
-  # 'prefill': 100,
+  'prefill': 0,
   # 'eval_every': 100,
   # 'train_steps': 60,
   # 'train_every': 1000000,
@@ -65,7 +68,9 @@ config = dv2.defaults.update({
 
 
 
-env = make_env('ambf_needle_picking_64x64_discrete',is_segment_filter=True, is_gripper_state_image=True,is_idle_action=False)
+# env = make_env('ambf_needle_picking_64x64_discrete',is_segment_filter=True, is_gripper_state_image=True,is_idle_action=False)
+env = make_env('ambf_needle_picking_64x64_discrete', image_preprocess_type='mixdepth', is_gripper_state_image=True,is_idle_action=False)
+
 dv2.train(env, config, is_pure_train=config.is_pure_train, is_pure_datagen=config.is_pure_datagen)
 
 env.close()

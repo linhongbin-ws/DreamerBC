@@ -43,7 +43,7 @@ defaults:
   bc_skip_start_step_num: 0
   bc_data_agent_retrain: True
   bc_loss: True
-  bc_grad_weight: 0.0
+  bc_grad_weight: 'linear(0e0,0e0,3.5e4)'
 
   # Agent
   clip_rewards: tanh

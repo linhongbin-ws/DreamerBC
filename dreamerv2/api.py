@@ -177,6 +177,22 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
   train_dataset = iter(train_replay.dataset(**config.dataset))
   eval_dataset = iter(eval_replay.dataset(**config.dataset))
+  while True:
+    try:
+      next(train_dataset)
+      break
+    except:
+      random_agnt = common.RandomAgent(env.act_space)
+      train_driver(random_agnt, episodes=1)
+
+  while True:
+    try:
+      next(eval_dataset)
+      break
+    except:
+      random_agnt = common.RandomAgent(env.act_space)
+      eval_driver(random_agnt, episodes=1)
+      
   if config.bc_dir is not '':
     print(config.bc_dir)
     bc_dir = pathlib.Path(config.bc_dir)
@@ -245,6 +261,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
             des_str = f"actor_pure: {mets['actor_pure_loss'].numpy()} critic: {mets['critic_loss'].numpy()}"
             if bc_dataset is not None:
               des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy()} "
+              des_str = des_str + f"bc_grad_w: {mets['bc_grad_weight'].numpy()} "
             pbar.set_description(des_str)
         if should_log(step):
           for name, values in metrics.items():
