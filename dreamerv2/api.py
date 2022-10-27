@@ -178,10 +178,14 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
   train_dataset = iter(train_replay.dataset(**config.dataset))
   eval_dataset = iter(eval_replay.dataset(**config.dataset))
   while True:
+    next(train_dataset)
     try:
       next(train_dataset)
       break
-    except:
+    except Exception as e:
+      print("encounter error:")
+      print(e)
+      print("fill 1 eps training eps...")
       random_agnt = common.RandomAgent(env.act_space)
       train_driver(random_agnt, episodes=1)
 
@@ -281,8 +285,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         score = float(ep['reward'].astype(np.float64).sum())
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
-        eval_stat['sucess_eps_count'] += int(score>0)
-        if len(ep['reward']) <3:
+        eval_stat['sucess_eps_count'] += int(ep['reward'][-1]>=config.eval_success_reward)
+        if ep['state'][-1] == 2 or ep['state'][-1] == 3:
           eval_stat['filter_cases_cnt'] +=1
         print(f"sucess/total/filter_cases: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']})")
       eval_driver.on_episode(eval_sucess_count)
@@ -304,8 +308,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       print(f"# eval rate: {eval_stat['sucess_eps_rate']} !!")
       print(f"# eval filter rate: {eval_stat['sucess_eps_filter_rate']} !!")
       print(f"# eval average return: {eval_stat['average_scores']}")
-      if eval_stat['sucess_eps_rate'] >= config.save_sucess_eps_rate:
-        _model_dir = str(step.value) + '_'+str(int(eval_stat['sucess_eps_rate']*100))+'_percent'
+      if eval_stat['sucess_eps_filter_rate'] >= config.save_sucess_eps_filter_rate:
+        _model_dir = str(step.value) + '_'+str(int(eval_stat['sucess_eps_filter_rate']*100))+'_percent'
         agnt.save_sep(logdir / 'model' / _model_dir)
         config.save(logdir / 'model' / _model_dir / 'config.yaml')
         print("save  eval param")

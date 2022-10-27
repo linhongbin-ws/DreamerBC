@@ -38,12 +38,13 @@ defaults:
   reward_norm_skip: False
   train_carrystate: True
   grad_extra_image_channel_scale: [0,0,0]
-  save_sucess_eps_rate: 0.5
+  save_sucess_eps_filter_rate: 0.5
   bc_dir: ''
   bc_skip_start_step_num: 0
   bc_data_agent_retrain: True
   bc_loss: True
   bc_grad_weight: 'linear(0e0,0e0,3.5e4)'
+  eval_success_reward: 0.99
 
   # Agent
   clip_rewards: tanh
