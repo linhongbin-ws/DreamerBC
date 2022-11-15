@@ -265,7 +265,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
             des_str = f"actor_pure: {mets['actor_pure_loss'].numpy()} critic: {mets['critic_loss'].numpy()}"
             if bc_dataset is not None:
               des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy()} "
-              des_str = des_str + f"bc_grad_w: {mets['bc_grad_weight'].numpy()} "
+              des_str = des_str + f"bc_grad_w: {mets['bc_grad_weight']} "
             pbar.set_description(des_str)
         if should_log(step):
           for name, values in metrics.items():
@@ -286,7 +286,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
         eval_stat['sucess_eps_count'] += int(ep['reward'][-1]>=config.eval_success_reward)
-        if ep['state'][-1] == 2 or ep['state'][-1] == 3:
+        if ep['state'][-1] >=3:
           eval_stat['filter_cases_cnt'] +=1
         print(f"sucess/total/filter_cases: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']})")
       eval_driver.on_episode(eval_sucess_count)
@@ -301,7 +301,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       eval_driver(eval_policy, episodes=config.eval_eps)
       eval_stat['average_scores'] = eval_stat['average_scores']/config.eval_eps
       eval_stat['sucess_eps_rate'] = eval_stat['sucess_eps_count']/config.eval_eps
-      eval_stat['sucess_eps_filter_rate'] = eval_stat['sucess_eps_count']/(config.eval_eps-eval_stat['filter_cases_cnt'])
+      eval_stat['sucess_eps_filter_rate'] = eval_stat['sucess_eps_count']/(config.eval_eps-eval_stat['filter_cases_cnt']) if config.eval_eps-eval_stat['filter_cases_cnt'] >=1 else 0
       logger.add(eval_stat, prefix='eval')
       logger.add(agnt.report(next(eval_dataset)), prefix='eval')
       print("==============")
