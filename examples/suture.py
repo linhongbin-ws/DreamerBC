@@ -4,14 +4,13 @@ from pathlib import Path
 
 # vars
 logdir = None
-section = 1
-baseline = "DreamerPT"
-
-
+section = 5
+baseline = "DreamerBC"
+image_preprocess_type = 'segment_script'
 
 
 if logdir is None:
-  logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / str(section) )
+  logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / image_preprocess_type / str(section) )
 
 print(f"save dir: {logdir}")
 # print({"DreamerBC":{'mlp_keys': '$^', 'cnn_keys': 'image'},
@@ -25,7 +24,6 @@ config = dv2.defaults.update({
 
   'bc_dir': logdir + '/train_episodes/oracle',
   'logdir': logdir,
-  
   'log_every': 4e2,
   # 'loss_scales.kl': 1.0,
   
@@ -33,29 +31,25 @@ config = dv2.defaults.update({
   # 'discount_lambda': 0.0,
   # 'slow_target': False,
   'task': 'suture_ambf_np',
-  'encoder': {"DreamerBC":{'mlp_keys': '$^', 'cnn_keys': 'image'},
-              "DreamerPT":{'mlp_keys': '.*', 'cnn_keys': '$^'},}[baseline],
-  'decoder': {"DreamerBC":{'mlp_keys': '$^', 'cnn_keys': 'image'},
-              "DreamerPT":{'mlp_keys': '.*', 'cnn_keys': '$^'},}[baseline],
+  'encoder': {'mlp_keys': '$^', 'cnn_keys': 'image'},
+  'decoder': {'mlp_keys': '$^', 'cnn_keys': 'image'},
   # 'action_repeat': 1,
   'rssm': {'hidden': 200, 'deter': 200},
   'pretrain': 100,
   'clip_rewards': 'identity',
   # 'grad_heads': ['decoder', 'reward','discount'],
   # 'rssm': {'hidden': 200, 'deter': 200, 'stoch': 32, 'discrete': 32},
-  # 'model_opt.lr': 1e-4,
-  'model_opt.lr': 2e-4,
+  'model_opt.lr': 1e-4,
   # 'actor_opt.lr': 4e-5,
   # 'actor_opt.lr': 0.0,
   'critic_opt.lr': 4e-5,
   'actor_opt.lr': 2e-5,
   # 'critic_opt.lr': 0,
   # 'critic.layers': 5,
-  'actor_ent': 2e-3,
+  # 'actor_ent': 2e-3,
   # 'actor_ent': 2e-7,
-  # 'actor_ent': 1e-7,
-  # 'prefill': 8e3,
-  'prefill': 4e3,
+  'actor_ent': 1e-7,
+  'prefill': 8e3,
   # 'prefill': 1e1,
   'prefill_agent': 'oracle',
   'time_limit': 50,
@@ -64,24 +58,19 @@ config = dv2.defaults.update({
   'reward_norm_skip': True,
   # 'grad_extra_image_channel_scale': [0,3,0], # rgb, emphasis green
   'train_every': 50,
-  # 'train_steps': 50,
-  'train_steps': 100,
-  'eval_eps': 20,
+  'train_steps': 50,
+  'eval_eps': 50,
   'eval_every': 8e2,
-  # 'bc_grad_weight': 4,
-  # 'bc_grad_weight': 'linear(1e1,1e-2,3.5e4)',
-  # 'bc_grad_weight': 'linear(1e1,2e0,3.5e4)',
-  'bc_grad_weight': 4e0,
+  'bc_grad_weight': 10,
   'save_sucess_eps_filter_rate': 0.7,
   'bc_skip_start_step_num': 2,
   # 'slow_target_update': 150
-  
   # #### debug
   # 'jit': False,
   # 'replay.capacity': 2e4,
   # 'log_every': 200,
   # 'eval_eps': 1,
-  # 'prefill': 60,
+  # 'prefill': 100,
   # 'eval_every': 100,
   # 'train_steps': 60,
   # 'train_every': 1000000,
@@ -94,7 +83,7 @@ env = make_env('ambf_needle_picking_64x64_discrete',
                       is_gripper_state_image=True, 
                       is_idle_action=False,
                       is_visualizer=False,
-                      image_preprocess_type = "segment_net",
+                      image_preprocess_type = image_preprocess_type,
                       obs_type = {"DreamerBC": "image","DreamerPT": "pose",}[baseline])
 
 dv2.train(env, config, is_pure_train=config.is_pure_train, is_pure_datagen=config.is_pure_datagen)

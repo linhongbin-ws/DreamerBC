@@ -189,6 +189,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       random_agnt = common.RandomAgent(env.act_space)
       train_driver(random_agnt, episodes=1)
 
+  random_agnt = common.RandomAgent(env.act_space)
+  eval_driver(random_agnt, episodes=2)
   while True:
     try:
       next(eval_dataset)
@@ -280,14 +282,17 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           print("save param")
       train_driver.on_step(train_step)
       
-      eval_stat = {'average_scores':0, 'sucess_eps_count':0, 'sucess_eps_rate':0, 'eps_cnt':0, 'filter_cases_cnt': 0}
+      eval_stat = {'average_scores':0, 'sucess_eps_count':0, 'sucess_eps_rate':0, 'eps_cnt':0, 'filter_cases_cnt': 0, 'filter_state_4_cnt':0, 'filter_state_5_cnt':0}
       def eval_sucess_count(ep):
         score = float(ep['reward'].astype(np.float64).sum())
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
         eval_stat['sucess_eps_count'] += int(ep['reward'][-1]>=config.eval_success_reward)
-        if ep['state'][-1] >=3:
+        if ep['state'][-1] >=4:
           eval_stat['filter_cases_cnt'] +=1
+          print(f"Bad filter case {ep['state'][-1]}!")
+          _str = f"filter_state_{ep['state'][-1]}_cnt"
+          eval_stat[_str] +=1
         print(f"sucess/total/filter_cases: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']})")
       eval_driver.on_episode(eval_sucess_count)
     while step < config.steps:

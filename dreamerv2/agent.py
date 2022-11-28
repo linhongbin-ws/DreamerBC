@@ -345,7 +345,7 @@ class ActorCritic(common.Module):
         bc_grad_weight = common.schedule(self.config.bc_grad_weight, self.tfstep)
         like = -tf.cast(action.log_prob(data['action'][:,1+self.config.bc_skip_start_step_num:,:]), tf.float32).mean() * bc_grad_weight
         actor_loss += like
-        mets3['actor_bc_loss'] = like
+        mets3['actor_bc_loss'] = like / bc_grad_weight
         mets3['bc_grad_weight'] = bc_grad_weight
         
     with tf.GradientTape() as critic_tape:

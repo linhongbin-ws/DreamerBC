@@ -1,0 +1,1 @@
+model lr 0.0008 cannot converge well
