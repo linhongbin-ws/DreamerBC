@@ -288,7 +288,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
         eval_stat['sucess_eps_count'] += int(ep['reward'][-1]>=config.eval_success_reward)
-        if ep['state'][-1] >=4:
+        if ep['state'][-1] >=3:
           eval_stat['filter_cases_cnt'] +=1
           print(f"Bad filter case {ep['state'][-1]}!")
           _str = f"filter_state_{ep['state'][-1]}_cnt"
