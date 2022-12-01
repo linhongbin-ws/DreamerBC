@@ -292,7 +292,10 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           eval_stat['filter_cases_cnt'] +=1
           print(f"Bad filter case {ep['state'][-1]}!")
           _str = f"filter_state_{ep['state'][-1]}_cnt"
-          eval_stat[_str] +=1
+          if not _str in eval_stat:
+            eval_stat[_str] =1
+          else:
+            eval_stat[_str] +=1
         print(f"sucess/total/filter_cases: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']})")
       eval_driver.on_episode(eval_sucess_count)
     while step < config.steps:
