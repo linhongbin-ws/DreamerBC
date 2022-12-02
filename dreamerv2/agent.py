@@ -78,7 +78,7 @@ class Agent(common.Module):
     
     if bc_data is not None:
       bc_state, bc_outputs, bc_mets = self.wm.train(bc_data, _bc_state)
-      bc_mets = {'bc_'+ k: v for k,v in bc_mets.items()}  
+      bc_mets = {'bc_retrain_' + k: v for k, v in bc_mets.items()}
       metrics.update(bc_mets)
     # if self.tfstep > self.config.train_only_wm_steps or force: 
     start = outputs['post']
@@ -89,7 +89,7 @@ class Agent(common.Module):
     if bc_data is not None and self.config.bc_data_agent_retrain:
       bc_behav_met = self._task_behavior.train(
           self.wm, bc_outputs['post'], bc_data['is_terminal'], reward, bc_data=bc_data, bc_state=_bc_state)
-      metrics.update({'bc_agent_retrain_'+ k: v for k,v in bc_behav_met.items()}  )
+      metrics.update({'bc_retrain_'+ k: v for k,v in bc_behav_met.items()}  )
     
     if self.config.expl_behavior != 'greedy':
       mets = self._expl_behavior.train(start, outputs, data)[-1]
@@ -343,9 +343,9 @@ class ActorCritic(common.Module):
         feat = world_model.rssm.get_feat(post)
         action = self.actor(tf.stop_gradient(feat[:,self.config.bc_skip_start_step_num:-1,:])) # action is prev action, needs to shift 1 
         bc_grad_weight = common.schedule(self.config.bc_grad_weight, self.tfstep)
-        like = -tf.cast(action.log_prob(data['action'][:,1+self.config.bc_skip_start_step_num:,:]), tf.float32).mean() * bc_grad_weight
-        actor_loss += like
-        mets3['actor_bc_loss'] = like / bc_grad_weight
+        like = -tf.cast(action.log_prob(data['action'][:,1+self.config.bc_skip_start_step_num:,:]), tf.float32).mean() 
+        actor_loss = like * bc_grad_weight + actor_loss * (1- bc_grad_weight)
+        mets3['actor_bc_loss'] = like * bc_grad_weight
         mets3['bc_grad_weight'] = bc_grad_weight
         
     with tf.GradientTape() as critic_tape:

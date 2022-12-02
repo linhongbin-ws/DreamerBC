@@ -3,17 +3,17 @@ actor: {act: elu, dist: auto, layers: 4, min_std: 0.1, norm: none, units: 400}
 actor_ent: 1e-4
 actor_grad: auto
 actor_grad_mix: 0.1
-actor_opt: {clip: 100, eps: 1e-05, lr: 9e-05, opt: adam, wd: 1e-06}
+actor_opt: {clip: 100, eps: 1e-05, lr: 2e-05, opt: adam, wd: 1e-06}
 actor_type: ActorCritic
 atari_grayscale: true
 bc_data_agent_retrain: true
 bc_dir: ./data/suture/needle_picking/ambf/dream2suture/train_episodes/oracle
-bc_grad_weight: 0.1
+bc_grad_weight: 0.85
 bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: identity
 critic: {act: elu, dist: mse, layers: 4, norm: none, units: 400}
-critic_opt: {clip: 100, eps: 1e-05, lr: 9e-05, opt: adam, wd: 1e-06}
+critic_opt: {clip: 100, eps: 1e-05, lr: 4e-05, opt: adam, wd: 1e-06}
 dataset: {batch: 70, length: 10}
 decoder:
   act: elu
@@ -42,7 +42,7 @@ encoder:
   norm: none
 envs: 1
 envs_parallel: none
-eval_eps: 58
+eval_eps: 10
 eval_every: 2000.0
 eval_noise: 0.0
 eval_state_mean: false

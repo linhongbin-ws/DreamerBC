@@ -264,10 +264,12 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           for _ in pbar:
             mets = train_agent(next(train_dataset), bc_func(bc_dataset))
             [metrics[key].append(value) for key, value in mets.items()]
-            des_str = f"actor_pure: {mets['actor_pure_loss'].numpy()} critic: {mets['critic_loss'].numpy()}"
-            if bc_dataset is not None:
-              des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy()} "
-              des_str = des_str + f"bc_grad_w: {mets['bc_grad_weight']} "
+            des_str = f"actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f}"
+            if bc_dataset is not None and config.bc_data_agent_retrain:
+              des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}"
+              des_str = des_str + \
+                  f" [retrain] actor: {mets['bc_retrain_actor_pure_loss'].numpy():.4f} critic: {mets['bc_retrain_critic_loss'].numpy():.4f} bc: {mets['bc_retrain_actor_bc_loss'].numpy():.4f}"
+              # des_str = des_str + f"bc_w: {mets['bc_grad_weight']:.2f} "
             pbar.set_description(des_str)
         if should_log(step):
           for name, values in metrics.items():
@@ -287,13 +289,14 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         score = float(ep['reward'].astype(np.float64).sum())
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
-        eval_stat['sucess_eps_count'] += int(ep['reward'][-1]>=config.eval_success_reward)
+        if ep['state'][-1] == 0:
+          eval_stat['sucess_eps_count'] += 1
         if ep['state'][-1] >=3:
           eval_stat['filter_cases_cnt'] +=1
           print(f"Bad filter case {ep['state'][-1]}!")
           _str = f"filter_state_{ep['state'][-1]}_cnt"
           if not _str in eval_stat:
-            eval_stat[_str] =1
+            eval_stat[_str]=1
           else:
             eval_stat[_str] +=1
         print(f"sucess/total/filter_cases: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']})")
