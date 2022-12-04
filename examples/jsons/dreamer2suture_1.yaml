@@ -3,17 +3,17 @@ actor: {act: elu, dist: auto, layers: 4, min_std: 0.1, norm: none, units: 400}
 actor_ent: 1e-4
 actor_grad: auto
 actor_grad_mix: 0.1
-actor_opt: {clip: 100, eps: 1e-05, lr: 2e-05, opt: adam, wd: 1e-06}
+actor_opt: {clip: 100, eps: 1e-08, lr: 1e-06, opt: adam, wd: 0}
 actor_type: ActorCritic
 atari_grayscale: true
-bc_data_agent_retrain: true
+bc_data_agent_retrain: false
 bc_dir: ./data/suture/needle_picking/ambf/dream2suture/train_episodes/oracle
-bc_grad_weight: 0.85
+bc_grad_weight: 0.0
 bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: identity
 critic: {act: elu, dist: mse, layers: 4, norm: none, units: 400}
-critic_opt: {clip: 100, eps: 1e-05, lr: 4e-05, opt: adam, wd: 1e-06}
+critic_opt: {clip: 100, eps: 1e-8, lr: 1e-06, opt: adam, wd: 0}
 dataset: {batch: 70, length: 10}
 decoder:
   act: elu
@@ -56,12 +56,13 @@ expl_noise: 0.0
 expl_opt: {clip: 100, eps: 1e-05, lr: 0.0003, opt: adam, wd: 1e-06}
 expl_reward_norm: {eps: 1e-08, momentum: 1.0, scale: 1.0}
 expl_until: 0
-grad_extra_image_channel_scale: [0, 0, 0]
+grad_extra_image_channel_scale: [1.0, 10.0, 0.05]
 grad_heads: [decoder, reward, discount]
+grad_uniform_image: false
 imag_horizon: 15
 is_pure_datagen: false
 is_pure_train: false
-jit: true
+jit: false
 kl: {balance: 0.8, forward: false, free: 0.0, free_avg: true}
 log_every: 400.0
 log_keys_max: ^$
@@ -70,7 +71,7 @@ log_keys_sum: ^$
 log_keys_video: [image]
 logdir: ./data/suture/needle_picking/ambf/dream2suture
 loss_scales: {discount: 1.0, kl: 1.0, proprio: 1.0, reward: 1.0}
-model_opt: {clip: 100, eps: 1e-05, lr: 1e-4, opt: adam, wd: 1e-06}
+model_opt: {clip: 100, eps: 1e-07, lr: 1e-4, opt: adam, wd: 1e-06}
 offline_step: 20000000
 precision: 16
 pred_discount: true
@@ -82,7 +83,7 @@ replay: {capacity: 2000000.0, maxlen: 10, minlen: 10, ongoing: false, prioritize
 reward_head: {act: elu, dist: mse, layers: 4, norm: none, units: 400}
 reward_norm: {eps: 1e-08, momentum: 1.0, scale: 1.0}
 reward_norm_skip: true
-rssm: {act: elu, deter: 200, deter_quant: 0, discrete: 32, ensemble: 1, hidden: 200,
+rssm: {act: elu, deter: 1024, deter_quant: 0, discrete: 32, ensemble: 1, hidden: 1024,
   min_std: 0.1, norm: none, std_act: sigmoid2, stoch: 32}
 save_sucess_eps_filter_rate: 0.7
 seed: 0

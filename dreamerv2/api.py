@@ -264,12 +264,12 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           for _ in pbar:
             mets = train_agent(next(train_dataset), bc_func(bc_dataset))
             [metrics[key].append(value) for key, value in mets.items()]
-            des_str = f"actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f}"
+            des_str = f"actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
             if bc_dataset is not None and config.bc_data_agent_retrain:
-              des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}"
+              des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}" 
               des_str = des_str + \
-                  f" [retrain] actor: {mets['bc_retrain_actor_pure_loss'].numpy():.4f} critic: {mets['bc_retrain_critic_loss'].numpy():.4f} bc: {mets['bc_retrain_actor_bc_loss'].numpy():.4f}"
-              # des_str = des_str + f"bc_w: {mets['bc_grad_weight']:.2f} "
+                  f" [retrain] actor: {mets['bc_retrain_actor_pure_loss'].numpy():.4f} critic: {mets['bc_retrain_critic_loss'].numpy():.4f} bc: {mets['bc_retrain_actor_bc_loss'].numpy():.4f} critic grad {mets['bc_retrain_critic_grad_norm'].numpy():.4f}"
+              # des_str = des_str + f"bc_w: {mets['bc_grad_weight']:.2f} " 
             pbar.set_description(des_str)
         if should_log(step):
           for name, values in metrics.items():

@@ -170,14 +170,15 @@ class WorldModel(common.Module):
       dists = out if isinstance(out, dict) else {name: out}
       for key, dist in dists.items():
         if key.find('image_c') == -1:
-          like = tf.cast(dist.log_prob(data[key]), tf.float32)
-          likes[key] = like
-          losses[key] = -like.mean()
+          if key.find('image') == -1 or self.config.grad_uniform_image:
+            like = tf.cast(dist.log_prob(data[key]), tf.float32)
+            likes[key] = like
+            losses[key] = -like.mean()
         else:
           _i = int(key[7:])
           if self.config.grad_extra_image_channel_scale[_i] > 0:
             like = tf.cast(dist.log_prob(data['image'][:,:,:,:,_i]), tf.float32)\
-                          * self.config.grad_extra_image_channel_scale[_i]
+                * self.config.grad_extra_image_channel_scale[_i] / sum(self.config.grad_extra_image_channel_scale)
             likes[key] = like
             losses[key] = -like.mean()
             
