@@ -6,9 +6,9 @@ actor_grad_mix: 0.1
 actor_opt: {clip: 100, eps: 1e-08, lr: 1e-06, opt: adam, wd: 0}
 actor_type: ActorCritic
 atari_grayscale: true
-bc_data_agent_retrain: false
+bc_data_agent_retrain: true
 bc_dir: ./data/suture/needle_picking/ambf/dream2suture/train_episodes/oracle
-bc_grad_weight: 0.0
+bc_grad_weight: 0.2
 bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: identity
@@ -62,7 +62,7 @@ grad_uniform_image: false
 imag_horizon: 15
 is_pure_datagen: false
 is_pure_train: false
-jit: false
+jit: true
 kl: {balance: 0.8, forward: false, free: 0.0, free_avg: true}
 log_every: 400.0
 log_keys_max: ^$

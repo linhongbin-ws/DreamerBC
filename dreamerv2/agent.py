@@ -178,7 +178,7 @@ class WorldModel(common.Module):
           _i = int(key[7:])
           if self.config.grad_extra_image_channel_scale[_i] > 0:
             like = tf.cast(dist.log_prob(data['image'][:,:,:,:,_i]), tf.float32)\
-                * self.config.grad_extra_image_channel_scale[_i] / sum(self.config.grad_extra_image_channel_scale)
+                * self.config.grad_extra_image_channel_scale[_i] / sum(self.config.grad_extra_image_channel_scale) * len(self.config.grad_extra_image_channel_scale)
             likes[key] = like
             losses[key] = -like.mean()
             

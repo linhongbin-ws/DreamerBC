@@ -37,30 +37,6 @@ import tensorflow as tf
 for gpu in tf.config.experimental.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(gpu, True)
 
-# def display_top(snapshot, key_type='lineno', limit=3):
-#   snapshot = snapshot.filter_traces((
-#       tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-#       tracemalloc.Filter(False, "<unknown>"),
-#   ))
-#   top_stats = snapshot.statistics(key_type)
-
-#   print("Top %s lines" % limit)
-#   for index, stat in enumerate(top_stats[:limit], 1):
-#       frame = stat.traceback[0]
-#       # replace "/path/to/module/file.py" with "module/file.py"
-#       filename = os.sep.join(frame.filename.split(os.sep)[-2:])
-#       print("#%s: %s:%s: %.1f KiB"
-#             % (index, filename, frame.lineno, stat.size / 1024))
-#       line = linecache.getline(frame.filename, frame.lineno).strip()
-#       if line:
-#           print('    %s' % line)
-
-#   other = top_stats[limit:]
-#   if other:
-#       size = sum(stat.size for stat in other)
-#       print("%s other: %.1f KiB" % (len(other), size / 1024))
-#   total = sum(stat.size for stat in top_stats)
-#   print("Total allocated size: %.1f KiB" % (total / 1024))
     
 def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False, skip_gym_wrap=False):
   assert not (is_pure_train and is_pure_datagen)
@@ -96,18 +72,16 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
 
   step = common.Counter(0) 
 
-
   if not skip_gym_wrap:
     env = common.GymWrapper(env)
     env = common.ResizeImage(env)
-    if hasattr(env.act_space['action'], 'n'):
-      env = common.OneHotAction(env)
-    else:
-      env = common.NormalizeAction(env)
-    env = common.TimeLimit(env, config.time_limit)
+  if hasattr(env.act_space['action'], 'n'):
+    env = common.OneHotAction(env)
+  else:
+    env = common.NormalizeAction(env)
+  env = common.TimeLimit(env, config.time_limit)
 
   if not is_pure_train:
-    
     # prefill agent
     prefill_replay = common.Replay(logdir / 'train_episodes' / config.prefill_agent, **config.replay)
     prefill_driver = common.Driver([env])
@@ -172,32 +146,34 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
     
     prefill_eval_agent = common.RandomAgent(env.act_space)
     eval_driver(prefill_eval_agent, episodes=1)
+    
+    while True:
+      next(train_dataset)
+      try:
+        next(train_dataset)
+      except Exception as e:
+        print("encounter error:")
+        print(e)
+        print("fill 1 eps training eps...")
+        random_agnt = common.RandomAgent(env.act_space)
+        train_driver(random_agnt, episodes=1)
+      else:
+        break
+    # eval_driver(random_agnt, episodes=2)
+    while True:
+      try:
+        next(eval_dataset)
+      except:
+        random_agnt = common.RandomAgent(env.act_space)
+        eval_driver(random_agnt, episodes=1)
+      else:
+        break
 
   print('Create agent.')
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
   train_dataset = iter(train_replay.dataset(**config.dataset))
   eval_dataset = iter(eval_replay.dataset(**config.dataset))
-  while True:
-    next(train_dataset)
-    try:
-      next(train_dataset)
-      break
-    except Exception as e:
-      print("encounter error:")
-      print(e)
-      print("fill 1 eps training eps...")
-      random_agnt = common.RandomAgent(env.act_space)
-      train_driver(random_agnt, episodes=1)
 
-  random_agnt = common.RandomAgent(env.act_space)
-  eval_driver(random_agnt, episodes=2)
-  while True:
-    try:
-      next(eval_dataset)
-      break
-    except:
-      random_agnt = common.RandomAgent(env.act_space)
-      eval_driver(random_agnt, episodes=1)
       
   if config.bc_dir is not '':
     print(config.bc_dir)
@@ -221,9 +197,9 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       tf.py_function(lambda: agnt.tfstep.assign(
         int(step), read_value=False), [], [])
       mets = train_agent(next(train_dataset), bc_func(bc_dataset))
-      des_str = f"actor_pure: {mets['actor_pure_loss'].numpy()} critic: {mets['critic_loss'].numpy()}"
-      if bc_dataset is not None:
-        des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy()} "
+      des_str = f"image: {mets['image_c0_loss'].numpy():.5e} {mets['image_c1_loss'].numpy():.5e}  {mets['image_c2_loss'].numpy():.5e} actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
+      if bc_dataset is not None and config.bc_loss:
+          des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}"
       pbar.set_description(des_str)
       # _ = agnt.report(next(dataset))
       [metrics[key].append(value) for key, value in mets.items()]
@@ -240,19 +216,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         agnt.save_sep(logdir)
         print("save param")
         
-        
-        # ## facing serious memory leak, ref to https://github.com/tensorflow/tensorflow/issues/37653
-        # _update = False
-        # import psutil
-
-        # # used_mem = psutil.virtual_memory().used
-        # # print("used memory: {} Mb".format(used_mem / 1024 / 1024))
-        # del dataset
-        # replay.cleanup()
-        # replay = common.Replay(logdir / 'train_episodes', **config.replay)
-        # dataset = iter(replay.dataset(**config.dataset))
-        # # snapshot = tracemalloc.take_snapshot()
-        # # display_top(snapshot)
+      
 
         
   else:
@@ -264,11 +228,12 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           for _ in pbar:
             mets = train_agent(next(train_dataset), bc_func(bc_dataset))
             [metrics[key].append(value) for key, value in mets.items()]
-            des_str = f"actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
-            if bc_dataset is not None and config.bc_data_agent_retrain:
-              des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}" 
-              des_str = des_str + \
-                  f" [retrain] actor: {mets['bc_retrain_actor_pure_loss'].numpy():.4f} critic: {mets['bc_retrain_critic_loss'].numpy():.4f} bc: {mets['bc_retrain_actor_bc_loss'].numpy():.4f} critic grad {mets['bc_retrain_critic_grad_norm'].numpy():.4f}"
+            des_str = f"image: {mets['image_c0_loss'].numpy():.5e} {mets['image_c1_loss'].numpy():.5e}  {mets['image_c2_loss'].numpy():.5e} actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
+            if bc_dataset is not None and config.bc_loss:
+              des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}"
+            # if bc_dataset is not None and config.bc_data_agent_retrain: 
+            #   des_str = des_str + \
+            #       f" [retrain] actor: {mets['bc_retrain_actor_pure_loss'].numpy():.4f} critic: {mets['bc_retrain_critic_loss'].numpy():.4f} bc: {mets['bc_retrain_actor_bc_loss'].numpy():.4f} critic grad {mets['bc_retrain_critic_grad_norm'].numpy():.4f}"
               # des_str = des_str + f"bc_w: {mets['bc_grad_weight']:.2f} " 
             pbar.set_description(des_str)
         if should_log(step):

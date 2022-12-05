@@ -6,7 +6,7 @@ from dreamerv2 import common
 import pathlib
 
 
-section = 15
+section = 16
 baseline = "DreamerBC"
 image_preprocess_type = 'segment_script'
 logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / image_preprocess_type / str(section) )
@@ -33,17 +33,20 @@ config = defaults.update({
 
 print(config)
 
+# if config.is_pure_train:
+#   env = None
+# else:
 env = make_env('ambf_needle_picking_64x64_discrete',  
-                     is_visualizer=True, 
-             image_preprocess_type=image_preprocess_type, 
-             is_depth=True, 
-             is_gripper_state_image=True,
-             is_idle_action=False,
-             is_ds4_oracle=False,
-             action_arm_device='psm2',
-             obs_type="image",
-             timelimit=None,
-             resize_resolution=64)
+                    is_visualizer=True, 
+            image_preprocess_type=image_preprocess_type, 
+            is_depth=True, 
+            is_gripper_state_image=True,
+            is_idle_action=False,
+            is_ds4_oracle=False,
+            action_arm_device='psm2',
+            obs_type="image",
+            timelimit=None,
+            resize_resolution=64)
 # obs = env.reset()
 # import cv2
 # frame = cv2.resize(obs['image'], (1080, 1080), interpolation=cv2.INTER_AREA)
@@ -55,5 +58,6 @@ env = make_env('ambf_needle_picking_64x64_discrete',
 #   cv2.imshow('preview', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)) # Display the resulting frame
 #   k = cv2.waitKey(0)
 dv2.train(env, config, is_pure_train=config.is_pure_train, is_pure_datagen=config.is_pure_datagen)
-
+# print(env.observation_space)
+# print(env.action_space)
 env.close()
