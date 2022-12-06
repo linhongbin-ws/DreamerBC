@@ -146,7 +146,9 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
     
     prefill_eval_agent = common.RandomAgent(env.act_space)
     eval_driver(prefill_eval_agent, episodes=1)
-    
+  
+    train_dataset = iter(train_replay.dataset(**config.dataset))
+    eval_dataset = iter(eval_replay.dataset(**config.dataset))
     while True:
       next(train_dataset)
       try:
@@ -171,8 +173,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
 
   print('Create agent.')
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
-  train_dataset = iter(train_replay.dataset(**config.dataset))
-  eval_dataset = iter(eval_replay.dataset(**config.dataset))
+
 
       
   if config.bc_dir is not '':
@@ -254,7 +255,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         score = float(ep['reward'].astype(np.float64).sum())
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
-        if ep['state'][-1] == 0:
+        if ep['state'][-1] == 1:
           eval_stat['sucess_eps_count'] += 1
         if ep['state'][-1] >=3:
           eval_stat['filter_cases_cnt'] +=1

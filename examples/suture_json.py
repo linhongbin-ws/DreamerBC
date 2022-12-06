@@ -23,7 +23,7 @@ config = defaults.update({
     # 'jit': False,
   # 'replay.capacity': 2e4,
   # 'log_every': 200,
-  'eval_eps': 1,
+  'eval_eps': 58,
   # 'prefill': 100,
   # 'eval_every': 100,
   # 'train_steps': 60,
@@ -46,7 +46,8 @@ env = make_env('ambf_needle_picking_64x64_discrete',
             action_arm_device='psm2',
             obs_type="image",
             timelimit=None,
-            resize_resolution=64)
+            resize_resolution=64,
+               is_dummy=config.is_pure_train,)
 # obs = env.reset()
 # import cv2
 # frame = cv2.resize(obs['image'], (1080, 1080), interpolation=cv2.INTER_AREA)
