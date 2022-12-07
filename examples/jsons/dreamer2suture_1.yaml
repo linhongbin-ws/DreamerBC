@@ -8,7 +8,7 @@ actor_type: ActorCritic
 atari_grayscale: true
 bc_data_agent_retrain: true
 bc_dir: ./data/suture/needle_picking/ambf/dream2suture/train_episodes/oracle
-bc_grad_weight: 0.9
+bc_grad_weight: 0.7
 bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: identity
@@ -79,7 +79,7 @@ prefill: 8000
 prefill_agent: oracle
 pretrain: 100
 render_size: [64, 64]
-replay: {capacity: 6000.0, maxlen: 10, minlen: 10, ongoing: false, prioritize_ends: false}
+replay: {capacity: 2000000.0, maxlen: 10, minlen: 10, ongoing: false, prioritize_ends: false}
 reward_head: {act: elu, dist: mse, layers: 4, norm: none, units: 400}
 reward_norm: {eps: 1e-08, momentum: 1.0, scale: 1.0}
 reward_norm_skip: true
