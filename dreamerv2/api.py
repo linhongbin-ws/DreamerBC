@@ -54,7 +54,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
     capacity=config.replay.capacity // 10,
     minlen=config.dataset.length,
     maxlen=config.dataset.length))
-  step = common.Counter(train_replay.stats['total_steps'])
+  step = common.Counter(0 if is_pure_train else train_replay.stats['total_steps'])
   outputs = outputs or [
       common.TerminalOutput(),
       common.JSONLOutput(str(offlinelogdir)),
@@ -70,7 +70,6 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
   should_video_eval = common.Every(config.eval_every)
   should_expl = common.Until(config.expl_until)
 
-  step = common.Counter(0) 
 
   if not skip_gym_wrap:
     env = common.GymWrapper(env)
@@ -102,13 +101,15 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       del prefill_replay
       del prefill_driver
       
-      train_replay = common.Replay(logdir / 'train_episodes', **config.replay)
-      eval_replay = common.Replay(logdir / 'eval_episodes', **dict(
-        capacity=config.replay.capacity // 10,
-        minlen=config.dataset.length,
-        maxlen=config.dataset.length))
-
-      
+  train_replay = common.Replay(logdir / 'train_episodes', **config.replay)
+  eval_replay = common.Replay(logdir / 'eval_episodes', **dict(
+    capacity=config.replay.capacity // 10,
+    minlen=config.dataset.length,
+    maxlen=config.dataset.length))
+  train_dataset = iter(train_replay.dataset(**config.dataset))
+  eval_dataset = iter(eval_replay.dataset(**config.dataset))
+  
+  if not is_pure_train:
     step = common.Counter(train_replay.stats['total_steps'])
     logger = common.Logger(step, outputs, multiplier=config.action_repeat)
     def per_episode(ep, mode):
@@ -147,8 +148,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
     prefill_eval_agent = common.RandomAgent(env.act_space)
     eval_driver(prefill_eval_agent, episodes=1)
   
-    train_dataset = iter(train_replay.dataset(**config.dataset))
-    eval_dataset = iter(eval_replay.dataset(**config.dataset))
+
     while True:
       next(train_dataset)
       try:
@@ -188,13 +188,15 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
   train_agent = common.CarryOverState(agnt.train, is_bc=bc_dataset is not None)
   train_agent(next(train_dataset), bc_func(bc_dataset))
   agnt.load_sep(logdir)
+  step.value =  agnt.tfstep.numpy()
   train_policy = lambda *args: agnt.policy(
       *args, mode='explore' if should_expl(step) else 'train')
   eval_policy = lambda *args: agnt.policy(*args, mode='eval')
 
   if is_pure_train:
-    pbar = tqdm(range(config.offline_step))
-    for _s in pbar:
+    pbar = tqdm(total=config.offline_step)
+    pbar.update(step.value)
+    for _s in range(config.offline_step):
       step.increment()
       tf.py_function(lambda: agnt.tfstep.assign(
         int(step), read_value=False), [], [])
@@ -203,6 +205,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       if bc_dataset is not None and config.bc_loss:
           des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}"
       pbar.set_description(des_str)
+      pbar.update(1)
       # _ = agnt.report(next(dataset))
       [metrics[key].append(value) for key, value in mets.items()]
       if should_log(step):
