@@ -161,7 +161,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         train_driver(random_agnt, episodes=1)
       else:
         break
-    # eval_driver(random_agnt, episodes=2)
+    random_agnt = common.RandomAgent(env.act_space)
+    eval_driver(random_agnt, episodes=2)
     while True:
       try:
         next(eval_dataset)
