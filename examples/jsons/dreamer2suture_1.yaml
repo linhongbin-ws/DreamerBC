@@ -71,7 +71,7 @@ log_keys_sum: ^$
 log_keys_video: [image]
 logdir: ./data/suture/needle_picking/ambf/dream2suture
 loss_scales: {discount: 1.0, kl: 1.0, proprio: 1.0, reward: 1.0}
-model_opt: {clip: 100, eps: 1e-07, lr: 3e-4, opt: adam, wd: 1e-06}
+model_opt: {clip: 100, eps: 1e-07, lr: 1e-4, opt: adam, wd: 1e-06}
 offline_step: 20000000
 precision: 16
 pred_discount: true
