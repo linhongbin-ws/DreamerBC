@@ -56,7 +56,7 @@ expl_noise: 0.0
 expl_opt: {clip: 100, eps: 1e-05, lr: 0.0003, opt: adam, wd: 1e-06}
 expl_reward_norm: {eps: 1e-08, momentum: 1.0, scale: 1.0}
 expl_until: 0
-grad_extra_image_channel_scale: [1.0, 100.0, 0.05]
+grad_extra_image_channel_scale: [1.0, 50.0, 0.05]
 grad_heads: [decoder, reward, discount]
 grad_uniform_image: false
 imag_horizon: 15
@@ -71,7 +71,7 @@ log_keys_sum: ^$
 log_keys_video: [image]
 logdir: ./data/suture/needle_picking/ambf/dream2suture
 loss_scales: {discount: 1.0, kl: 1.0, proprio: 1.0, reward: 1.0}
-model_opt: {clip: 100, eps: 1e-07, lr: 1e-4, opt: adam, wd: 1e-06}
+model_opt: {clip: 100, eps: 1e-05, lr: 1e-4, opt: adam, wd: 1e-06}
 offline_step: 20000000
 precision: 16
 pred_discount: true
