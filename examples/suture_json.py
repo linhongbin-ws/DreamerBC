@@ -6,7 +6,7 @@ from dreamerv2 import common
 import pathlib
 
 
-section = 16
+section = 18
 baseline = "DreamerBC"
 image_preprocess_type = 'segment_script'
 logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / image_preprocess_type / str(section) )
