@@ -106,8 +106,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
     capacity=config.replay.capacity // 10,
     minlen=config.dataset.length,
     maxlen=config.dataset.length))
-  train_dataset = iter(train_replay.dataset(**config.dataset))
-  eval_dataset = iter(eval_replay.dataset(**config.dataset))
+
   
   if not is_pure_train:
     step = common.Counter(train_replay.stats['total_steps'])
@@ -146,12 +145,11 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
     eval_driver.on_episode(eval_replay.add_episode)
     
     prefill_eval_agent = common.RandomAgent(env.act_space)
-    eval_driver(prefill_eval_agent, episodes=1)
-  
+    eval_driver(prefill_eval_agent, episodes=3)
 
     while True:
-      next(train_dataset)
       try:
+        train_dataset = iter(train_replay.dataset(**config.dataset))
         next(train_dataset)
       except Exception as e:
         print("encounter error:")
@@ -161,16 +159,18 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         train_driver(random_agnt, episodes=1)
       else:
         break
-    random_agnt = common.RandomAgent(env.act_space)
-    eval_driver(random_agnt, episodes=2)
     while True:
       try:
+        eval_dataset = iter(eval_replay.dataset(**config.dataset))
         next(eval_dataset)
       except:
         random_agnt = common.RandomAgent(env.act_space)
         eval_driver(random_agnt, episodes=1)
       else:
         break
+  else:
+    train_dataset = iter(train_replay.dataset(**config.dataset))
+    eval_dataset = iter(eval_replay.dataset(**config.dataset))
 
   print('Create agent.')
   agnt = agent.Agent(config, env.obs_space, env.act_space, step, env=env)
