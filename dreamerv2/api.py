@@ -188,7 +188,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
   train_agent = common.CarryOverState(agnt.train, is_bc=bc_dataset is not None)
   train_agent(next(train_dataset), bc_func(bc_dataset))
   agnt.load_sep(logdir)
-  step.value =  agnt.tfstep.numpy()
+  if is_pure_train:
+    step.value =  agnt.tfstep.numpy()
   train_policy = lambda *args: agnt.policy(
       *args, mode='explore' if should_expl(step) else 'train')
   eval_policy = lambda *args: agnt.policy(*args, mode='eval')
@@ -201,7 +202,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       tf.py_function(lambda: agnt.tfstep.assign(
         int(step), read_value=False), [], [])
       mets = train_agent(next(train_dataset), bc_func(bc_dataset))
-      des_str = f"image: {mets['image_c0_loss'].numpy():.5e} {mets['image_c1_loss'].numpy():.5e}  {mets['image_c2_loss'].numpy():.5e} actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
+      des_str = ""
+      # des_str = f"image: {mets['image_c0_loss'].numpy():.5e} {mets['image_c1_loss'].numpy():.5e}  {mets['image_c2_loss'].numpy():.5e} actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
       if bc_dataset is not None and config.bc_loss:
           des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}"
       pbar.set_description(des_str)
@@ -233,7 +235,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           for _ in pbar:
             mets = train_agent(next(train_dataset), bc_func(bc_dataset))
             [metrics[key].append(value) for key, value in mets.items()]
-            des_str = f"image: {mets['image_c0_loss'].numpy():.5e} {mets['image_c1_loss'].numpy():.5e}  {mets['image_c2_loss'].numpy():.5e} actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
+            # des_str = f"image: {mets['image_c0_loss'].numpy():.5e} {mets['image_c1_loss'].numpy():.5e}  {mets['image_c2_loss'].numpy():.5e} actor: {mets['actor_pure_loss'].numpy():.4f} critic: {mets['critic_loss'].numpy():.4f} critic grad {mets['critic_grad_norm'].numpy():.4f}"
+            des_str = ""
             if bc_dataset is not None and config.bc_loss:
               des_str = des_str + f"bc: {mets['actor_bc_loss'].numpy():.4f}"
             # if bc_dataset is not None and config.bc_data_agent_retrain: 
