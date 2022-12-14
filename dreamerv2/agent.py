@@ -72,12 +72,12 @@ class Agent(common.Module):
       _state = state if self.config.train_carrystate else None
     else:
       _state = state[0] if self.config.train_carrystate else None
-      _bc_state = state[1] if self.config.train_carrystate else None
+      _bc_state = state[1]
     state, outputs, mets = self.wm.train(data, _state)
     metrics.update(mets)
     
     if bc_data is not None:
-      bc_state, bc_outputs, bc_mets = self.wm.train(bc_data, _bc_state)
+      bc_state, bc_outputs, bc_mets = self.wm.train(bc_data, state[1] if self.config.train_carrystate else None)
       bc_mets = {'bc_retrain_' + k: v for k, v in bc_mets.items()}
       metrics.update(bc_mets)
     # if self.tfstep > self.config.train_only_wm_steps or force: 
@@ -271,17 +271,17 @@ class WorldModel(common.Module):
     return obs
 
   @tf.function
-  def video_pred(self, data, key):
+  def video_pred(self, data, key, post_horizon=1):
     decoder = self.heads['decoder']
     truth = data[key][:6] + 0.5
     embed = self.encoder(data)
     states, _ = self.rssm.observe(
-        embed[:6, :5], data['action'][:6, :5], data['is_first'][:6, :5])
+        embed[:6, :post_horizon], data['action'][:6, :post_horizon], data['is_first'][:6, :post_horizon])
     recon = decoder(self.rssm.get_feat(states))[key].mode()[:6]
     init = {k: v[:, -1] for k, v in states.items()}
-    prior = self.rssm.imagine(data['action'][:6, 5:], init)
+    prior = self.rssm.imagine(data['action'][:6, post_horizon:], init)
     openl = decoder(self.rssm.get_feat(prior))[key].mode()
-    model = tf.concat([recon[:, :5] + 0.5, openl + 0.5], 1)
+    model = tf.concat([recon[:, :post_horizon] + 0.5, openl + 0.5], 1)
     error = (model - truth + 1) / 2
     video = tf.concat([truth, model, error], 2)
     B, T, H, W, C = video.shape
