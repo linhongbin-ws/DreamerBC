@@ -77,7 +77,7 @@ class Agent(common.Module):
     metrics.update(mets)
     
     if bc_data is not None:
-      bc_state, bc_outputs, bc_mets = self.wm.train(bc_data, state[1] if self.config.train_carrystate else None)
+      bc_state, bc_outputs, bc_mets = self.wm.train(bc_data, _bc_state if self.config.train_carrystate else None)
       bc_mets = {'bc_retrain_' + k: v for k, v in bc_mets.items()}
       metrics.update(bc_mets)
     # if self.tfstep > self.config.train_only_wm_steps or force: 
