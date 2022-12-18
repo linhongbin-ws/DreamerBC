@@ -107,7 +107,8 @@ class Agent(common.Module):
     data = self.wm.preprocess(data)
     for key in self.wm.heads['decoder'].cnn_keys:
       name = key.replace('/', '_')
-      report[f'openl_{name}'] = self.wm.video_pred(data, key)
+      report[f'openl_{name}_p1'] = self.wm.video_pred(data, key, post_horizon=1)
+      report[f'openl_{name}_p5'] = self.wm.video_pred(data, key, post_horizon=5)
     return report
   
   def save_sep(self, dir):

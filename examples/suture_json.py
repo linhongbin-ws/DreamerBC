@@ -8,7 +8,9 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--json', type=str, required=True)
-parser.add_argument('-s', '--section', type=int, default=1)
+parser.add_argument('--section', type=int, default=1)
+parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--eval-eps', type=int, default=58)
 parser.add_argument('--seg-proc', type=str, default="segment_script")
 parser.add_argument('--baseline', type=str, default="DreamerBC")
 parser.add_argument('--only-train', action='store_true')
@@ -33,7 +35,8 @@ config = defaults.update({
     # 'jit': False,
   # 'replay.capacity': 2e4,
   # 'log_every': 200,
-  'eval_eps': 22,
+  'eval_eps': args.eval_eps,
+  'seed': args.seed,
   # 'prefill': 100,
   # 'eval_every': 100,
   # 'train_steps': 60,
@@ -58,6 +61,7 @@ env = make_env('ambf_needle_picking_64x64_discrete',
             timelimit=None,
             resize_resolution=64,
                is_dummy=config.is_pure_train,)
+env.seed = args.seed
 # # obs = env.reset()
 # # import cv2
 # # frame = cv2.resize(obs['image'], (1080, 1080), interpolation=cv2.INTER_AREA)
