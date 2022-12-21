@@ -12,3 +12,5 @@ small replay buffer 8000 does not train well
 image grad weight exceed 100:1 is not train goood
 
 train_carrystate set to false give a poorer training results for world model
+
+deter 1024 give a better results compared to deter 200

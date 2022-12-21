@@ -93,7 +93,7 @@ slow_target_fraction: 1
 slow_target_update: 100
 steps: 100000000.0
 task: suture_ambf_np
-time_limit: 50
+time_limit: 100
 train_carrystate: true
 train_every: 50
 train_mcts_batch_size: 16
