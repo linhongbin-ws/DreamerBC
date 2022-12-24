@@ -262,9 +262,10 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         score = float(ep['reward'].astype(np.float64).sum())
         eval_stat['eps_cnt'] +=1
         eval_stat['average_scores'] += score
-        if ep['state'][-1] == 1:
+        print(ep['state'][-1][0]==2.0)
+        if ep['state'][-1][0] == 1.0:
           eval_stat['sucess_eps_count'] += 1
-        if ep['state'][-1] >=3:
+        if ep['state'][-1][0] >=3.0:
           eval_stat['filter_cases_cnt'] +=1
           print(f"Bad filter case {ep['state'][-1]}!")
           _str = f"filter_state_{ep['state'][-1]}_cnt"
