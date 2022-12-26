@@ -12,6 +12,7 @@ parser.add_argument('--section', type=int, default=1)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--eval-eps', type=int, default=58)
 parser.add_argument('--seg-proc', type=str, default="segment_script")
+parser.add_argument('--seg-method', type=str, default="depth_seg_zoom_image")
 parser.add_argument('--baseline', type=str, default="DreamerBC")
 parser.add_argument('--only-train', action='store_true')
 parser.add_argument('--only-datagen', action='store_true')
@@ -51,16 +52,16 @@ print(config)
 # else:
 env = make_env('ambf_needle_picking_64x64_discrete',  
                     is_visualizer=True, 
-            image_preprocess_type=image_preprocess_type, 
+            image_preprocess_type=image_preprocess_type,
+               image_preprocess_method=args.seg_method,
             is_depth=True, 
-            is_gripper_state_image=True,
             is_idle_action=False,
             is_ds4_oracle=False,
             action_arm_device='psm2',
             obs_type="image",
             timelimit=None,
             resize_resolution=64,
-               is_dummy=config.is_pure_train,)
+            is_dummy=config.is_pure_train,)
 env.seed = args.seed
 # # obs = env.reset()
 # # import cv2
