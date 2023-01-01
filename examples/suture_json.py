@@ -10,9 +10,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--json', type=str, required=True)
 parser.add_argument('--section', type=int, default=1)
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--eval-eps', type=int, default=58)
+parser.add_argument('--eval-eps', type=int, default=20)
 parser.add_argument('--seg-proc', type=str, default="segment_script")
-parser.add_argument('--seg-method', type=str, default="depth_seg_zoom_needle_window")
+parser.add_argument('--seg-method', type=str, default="zoom_needle_gripper_boximage") # zoom_needle_boximage
 parser.add_argument('--baseline', type=str, default="DreamerBC")
 parser.add_argument('--only-train', action='store_true')
 parser.add_argument('--only-datagen', action='store_true')
@@ -21,7 +21,7 @@ args = parser.parse_args()
 section = args.section
 baseline = args.baseline
 image_preprocess_type = args.seg_proc
-logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / image_preprocess_type / str(section) )
+logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / image_preprocess_type / args.seg_method / str(section) )
 in_json_path = pathlib.Path(args.json)
 
 #=========================================
