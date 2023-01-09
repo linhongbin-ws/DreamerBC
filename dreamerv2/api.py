@@ -66,8 +66,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
 
   should_train = common.Every(config.train_every)
   should_log = common.Every(config.log_every)
-  should_video_train = common.Every(config.eval_every)
-  should_video_eval = common.Every(config.eval_every)
+  should_video_train = common.Every(config.eval_video_every)
+  should_video_eval = common.Every(config.eval_video_every)
   should_expl = common.Until(config.expl_until)
 
 

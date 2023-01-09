@@ -1,0 +1,2 @@
+rssm: {act: elu, deter: 1024, deter_quant: 0, discrete: 32, ensemble: 1, hidden: 1024,
+  min_std: 0.1, norm: none, std_act: sigmoid2, stoch: 32}
