@@ -6,62 +6,88 @@ from dreamerv2 import common
 import pathlib
 import argparse
 
+#========================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--json', type=str, required=True)
-parser.add_argument('--section', type=int, default=1)
+# RL related
+parser.add_argument('--json', type=str, default="./examples/jsons/zoom_needle_gripper_boximage/config_wm512.yaml")
+parser.add_argument('--section', type=int, required=True)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--eval-eps', type=int, default=20)
-parser.add_argument('--seg-proc', type=str, default="segment_script")
-parser.add_argument('--seg-method', type=str, default="zoom_needle_gripper_boximage") # zoom_needle_boximage
 parser.add_argument('--baseline', type=str, default="DreamerBC")
 parser.add_argument('--only-train', action='store_true')
 parser.add_argument('--only-datagen', action='store_true')
+parser.add_argument('--prefill', type=int, default=-1) # <0 means following default settings
+
+# env related
+parser.add_argument('--robot', type=str, default='ambf') # [ambf, dvrk]
+parser.add_argument('--arm', type=str, default='psm2') # [psm1, psm2]
+parser.add_argument('--preprocess-type', type=str, default='segment_script') # [segment_net, mixdepth,origin, segment_script]
+parser.add_argument('--preprocess-method', type=str, default='zoom_needle_gripper_boximage') #[zoom_needle_gripper_boximage, zoom_needle_boximage]
+parser.add_argument('--clutch', type=int, default=6)
+
 args = parser.parse_args()
+
+#==================================
 
 section = args.section
 baseline = args.baseline
-image_preprocess_type = args.seg_proc
-logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / image_preprocess_type / args.seg_method / str(section) )
+logdir = str(Path('./data/suture/needle_picking/ambf') / baseline / args.preprocess_type / args.preprocess_method / str(section) )
 in_json_path = pathlib.Path(args.json)
-
-#=========================================
-# in_json_path = pathlib.Path(__file__).parent / 'jsons'/ 'dreamer2suture_1.yaml'
 
 configs = yaml.safe_load((in_json_path).read_text())
 defaults = common.Config(configs)
 config = defaults.update({
   'bc_dir': logdir + '/train_episodes/oracle',
   'logdir': logdir,         
-  ## debug        
-    # 'jit': False,
-  # 'replay.capacity': 2e4,
-  # 'log_every': 200,
   'eval_eps': args.eval_eps,
   'seed': args.seed,
-  # 'prefill': 100,
-  # 'eval_every': 100,
-  # 'train_steps': 60,
-  # 'train_every': 1000000,
                  })
 
+assert args.baseline in ["DreamerBC", "Dreamer"]
+if args.baseline == "Dreamer":
+  config=config.update({
+    "bc_grad_weight": 0,
+    "bc_wm_retrain": False,
+    "bc_agent_retrain": False,
+  })
 
+if args.prefill>=0:
+  config=config.update({
+    "prefill": args.prefill
+  })
 print(config)
 
 # if config.is_pure_train:
 #   env = None
 # else:
-env = make_env('ambf_needle_picking_64x64_discrete',  
-                    is_visualizer=True, 
-            image_preprocess_type=image_preprocess_type,
-               image_preprocess_method=args.seg_method,
-            is_depth=True, 
-            is_idle_action=False,
-            is_ds4_oracle=False,
-            action_arm_device='psm2',
-            obs_type="image",
-            timelimit=None,
-            resize_resolution=64,
-            is_dummy=config.is_pure_train,)
+# env = make_env('ambf_needle_picking_64x64_discrete',  
+#                     is_visualizer=True, 
+#             image_preprocess_type=image_preprocess_type,
+#                image_preprocess_method=args.seg_method,
+#             is_depth=True, 
+#             is_idle_action=False,
+#             is_ds4_oracle=False,
+#             action_arm_device='psm2',
+#             obs_type="image",
+#             timelimit=None,
+#             resize_resolution=64,
+#             is_dummy=config.is_pure_train,
+            
+env = make_env(task="{}_needle_picking_64x64_discrete".format(args.robot),
+             image_preprocess_type=args.preprocess_type if args.preprocess_type not in ["origin"] else None, 
+             image_preprocess_method=args.preprocess_method,
+            #  scalar2image_obs_key=["gripper_state", "state"],
+             action_arm_device=args.arm,
+             clutch_start_engaged=args.clutch,
+             resize_resolution=64,
+            #  timelimit=-1, 
+            #  is_depth=True, 
+            #  is_idle_action=False,
+             is_ds4_oracle=False,
+             is_visualizer=False,
+            #  is_visualizer_blocking=True, 
+             is_dummy=config.is_pure_train,
+)
 env.seed = args.seed
 # # obs = env.reset()
 # # import cv2

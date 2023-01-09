@@ -76,7 +76,7 @@ class Agent(common.Module):
     state, outputs, mets = self.wm.train(data, _state)
     metrics.update(mets)
     
-    if bc_data is not None:
+    if bc_data is not None and self.config.bc_wm_retrain:
       bc_state, bc_outputs, bc_mets = self.wm.train(bc_data, _bc_state if self.config.train_carrystate else None)
       bc_mets = {'bc_retrain_' + k: v for k, v in bc_mets.items()}
       metrics.update(bc_mets)
@@ -86,7 +86,7 @@ class Agent(common.Module):
     
     metrics.update(self._task_behavior.train(
         self.wm, start, data['is_terminal'], reward, bc_data=bc_data, bc_state=_bc_state))
-    if bc_data is not None and self.config.bc_data_agent_retrain:
+    if bc_data is not None and self.config.bc_agent_retrain:
       bc_behav_met = self._task_behavior.train(
           self.wm, bc_outputs['post'], bc_data['is_terminal'], reward, bc_data=bc_data, bc_state=_bc_state)
       metrics.update({'bc_retrain_'+ k: v for k,v in bc_behav_met.items()}  )
@@ -392,6 +392,7 @@ class ActorCritic(common.Module):
       raise NotImplementedError(self.config.actor_grad)
     ent = policy.entropy()
     ent_scale = common.schedule(self.config.actor_ent, self.tfstep)
+    objective = objective * self.config.actor_grad_weight
     objective += ent_scale * ent
     weight = tf.stop_gradient(seq['weight'])
     actor_loss = -(weight[:-2] * objective).mean()
