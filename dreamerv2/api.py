@@ -214,9 +214,11 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
         for name, values in metrics.items():
           logger.scalar(name, np.array(values, np.float64).mean())
           metrics[name].clear()
-        logger.add(agnt.report(next(train_dataset)))
+        if should_video_train(step):
+          logger.add(agnt.report(next(train_dataset)))
+          if bc_dataset is not None:
+            bc_report = agnt.report(next(bc_dataset))
         if bc_dataset is not None:
-          bc_report = agnt.report(next(bc_dataset))
           logger.add({'bc_report_'+k: v for k,v in bc_report.items()})
         logger.write(fps=True)
         # agnt.save(logdir / 'variables.pkl')
@@ -248,9 +250,11 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           for name, values in metrics.items():
             logger.scalar(name, np.array(values, np.float64).mean())
             metrics[name].clear()
+          if should_video_train(step):
             logger.add(agnt.report(next(train_dataset)), prefix='train')
+            if bc_dataset is not None:
+              bc_report = agnt.report(next(bc_dataset))
           if bc_dataset is not None:
-            bc_report = agnt.report(next(bc_dataset))
             logger.add({'bc_report_'+k: v for k,v in bc_report.items()} , prefix='train')
           logger.write(fps=True)
           agnt.save_sep(logdir)
@@ -288,7 +292,8 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       eval_stat['sucess_eps_rate'] = eval_stat['sucess_eps_count']/config.eval_eps
       eval_stat['sucess_eps_filter_rate'] = eval_stat['sucess_eps_count']/(config.eval_eps-eval_stat['filter_cases_cnt']) if config.eval_eps-eval_stat['filter_cases_cnt'] >=1 else 0
       logger.add(eval_stat, prefix='eval')
-      logger.add(agnt.report(next(eval_dataset)), prefix='eval')
+      if should_video_eval(step):
+        logger.add(agnt.report(next(eval_dataset)), prefix='eval')
       print("==============")
       print(f"# eval rate: {eval_stat['sucess_eps_rate']} !!")
       print(f"# eval filter rate: {eval_stat['sucess_eps_filter_rate']} !!")
