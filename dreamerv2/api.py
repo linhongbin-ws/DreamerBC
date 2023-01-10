@@ -218,8 +218,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
           logger.add(agnt.report(next(train_dataset)))
           if bc_dataset is not None:
             bc_report = agnt.report(next(bc_dataset))
-        if bc_dataset is not None:
-          logger.add({'bc_report_'+k: v for k,v in bc_report.items()})
+            logger.add({'bc_report_'+k: v for k,v in bc_report.items()})
         logger.write(fps=True)
         # agnt.save(logdir / 'variables.pkl')
         agnt.save_sep(logdir)
@@ -254,8 +253,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
             logger.add(agnt.report(next(train_dataset)), prefix='train')
             if bc_dataset is not None:
               bc_report = agnt.report(next(bc_dataset))
-          if bc_dataset is not None:
-            logger.add({'bc_report_'+k: v for k,v in bc_report.items()} , prefix='train')
+              logger.add({'bc_report_'+k: v for k,v in bc_report.items()} , prefix='train')
           logger.write(fps=True)
           agnt.save_sep(logdir)
           print("save param")
