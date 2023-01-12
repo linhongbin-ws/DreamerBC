@@ -23,6 +23,7 @@ parser.add_argument('--robot', type=str, default='ambf') # [ambf, dvrk]
 parser.add_argument('--arm', type=str, default='psm2') # [psm1, psm2]
 parser.add_argument('--preprocess-type', type=str, default='segment_script') # [segment_net, mixdepth,origin, segment_script]
 parser.add_argument('--preprocess-method', type=str, default='zoom_needle_gripper_boximage') #[zoom_needle_gripper_boximage, zoom_needle_boximage]
+parser.add_argument('--segment-net-file', type=str, default="none")
 parser.add_argument('--clutch', type=int, default=6)
 
 args = parser.parse_args()
@@ -85,6 +86,7 @@ env = make_env(task="{}_needle_picking_64x64_discrete".format(args.robot),
              clutch_start_engaged=args.clutch,
              resize_resolution=64,
             #  timelimit=-1, 
+            segment_net_file=None if args.segment_net_file=="none" else args.segment_net_file,
             #  is_depth=True, 
             #  is_idle_action=False,
              is_ds4_oracle=False,
