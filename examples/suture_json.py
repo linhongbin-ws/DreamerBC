@@ -10,13 +10,12 @@ import argparse
 parser = argparse.ArgumentParser()
 # RL related
 parser.add_argument('--json', type=str, default="")
-parser.add_argument('--section', type=int, required=True)
+parser.add_argument('--section', type=int, default=1)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--eval-eps', type=int, default=20)
-# parser.add_argument('--baseline', type=str, default="DreamerBC")
 parser.add_argument('--only-train', action='store_true')
 parser.add_argument('--only-datagen', action='store_true')
-parser.add_argument('--prefill', type=int, default=-1) # <0 means following default settings
+parser.add_argument('--prefill', type=int, default=8000) # <0 means following default settings
 
 # env related
 parser.add_argument('--robot', type=str, default='ambf') # [ambf, dvrk]
@@ -43,7 +42,10 @@ if args.json !="":
   baseline = pathlib.Path(args.json).stem
 else:
   baseline = "DreamerBC"
+
+
 _env_name = args.robot+"-"+args.arm+"-"+ args.preprocess_type+"-"+args.image_type+"-prefill"+str(args.prefill)+"-clutch"+str(args.clutch) 
+
 
 logdir = str(Path('./data/suture/needle_picking') / _env_name / baseline / str(section) )
 config = config.update({
@@ -51,6 +53,7 @@ config = config.update({
   'logdir': logdir,         
   'eval_eps': args.eval_eps,
   'seed': args.seed,
+  'prefill' : args.prefill
                  })
 
 if args.preprocess_type == "segment_net":
