@@ -275,7 +275,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
             eval_stat[_str]=1
           else:
             eval_stat[_str] +=1
-        print(f"sucess/total/filter_cases: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']})")
+        print(f"sucess/total/filter_cases/goal: ({eval_stat['sucess_eps_count']}/ {eval_stat['eps_cnt']} / {eval_stat['filter_cases_cnt']}) / {config.eval_eps}")
       eval_driver.on_episode(eval_sucess_count)
     while step < config.steps:
 
@@ -285,7 +285,10 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       eval_driver.reset()
       for k,v in eval_stat.items():
         eval_stat[k] = 0
-      eval_driver(eval_policy, episodes=config.eval_eps)
+
+      while (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']) < config.eval_eps and eval_stat['eps_cnt'] < 2*config.eval_eps:
+        eval_driver(eval_policy, episodes=1)
+
       eval_stat['average_scores'] = eval_stat['average_scores']/config.eval_eps
       eval_stat['sucess_eps_rate'] = eval_stat['sucess_eps_count']/config.eval_eps
       eval_stat['sucess_eps_filter_rate'] = eval_stat['sucess_eps_count']/(config.eval_eps-eval_stat['filter_cases_cnt']) if config.eval_eps-eval_stat['filter_cases_cnt'] >=1 else 0
