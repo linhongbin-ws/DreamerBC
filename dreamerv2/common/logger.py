@@ -123,7 +123,7 @@ class TensorBoardOutput:
     if not self._writer:
       import tensorflow as tf
       self._writer = tf.summary.create_file_writer(
-          self._logdir, max_queue=1000)
+          self._logdir, max_queue=1000, filename_suffix=time.strftime("%Y%m%d-%H%M%S")+'.v2')
 
   def _video_summary(self, name, video, step):
     import tensorflow as tf
