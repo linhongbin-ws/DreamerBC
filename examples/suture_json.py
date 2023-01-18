@@ -45,7 +45,7 @@ else:
   baseline = "DreamerBC"
 
 
-_env_name = args.robot+"-"+args.arm+"-"+ args.preprocess_type+"-"+args.image_type+"-prefill"+str(args.prefill)+"-clutch"+str(args.clutch) 
+_env_name = args.robot+"-"+args.platform+"-"+args.arm+"-"+ args.preprocess_type+"-"+args.image_type+"-prefill"+str(args.prefill)+"-clutch"+str(args.clutch) 
 
 
 logdir = str(Path('./data/suture/needle_picking') / _env_name / baseline / str(section) )
