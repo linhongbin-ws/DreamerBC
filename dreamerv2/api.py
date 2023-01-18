@@ -289,9 +289,12 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
       while (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']) < config.eval_eps and eval_stat['eps_cnt'] < 2*config.eval_eps:
         eval_driver(eval_policy, episodes=1)
 
-      eval_stat['average_scores'] = eval_stat['average_scores']/config.eval_eps
-      eval_stat['sucess_eps_rate'] = eval_stat['sucess_eps_count']/config.eval_eps
-      eval_stat['sucess_eps_filter_rate'] = eval_stat['sucess_eps_count']/(config.eval_eps-eval_stat['filter_cases_cnt']) if config.eval_eps-eval_stat['filter_cases_cnt'] >=1 else 0
+      eval_stat['average_scores'] = eval_stat['average_scores'] / \
+          eval_stat['eps_cnt']
+      eval_stat['sucess_eps_rate'] = eval_stat['sucess_eps_count']/eval_stat['eps_cnt']
+      eval_stat['sucess_eps_filter_rate'] = eval_stat['sucess_eps_count'] / \
+          (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']
+           ) if (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']) >= 1 else 0
       logger.add(eval_stat, prefix='eval')
       if should_video_eval(step):
         logger.add(agnt.report(next(eval_dataset)), prefix='eval')
