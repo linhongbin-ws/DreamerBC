@@ -101,6 +101,6 @@ if args.only_eval:
                 time_limit=args.timelimit if args.timelimit>0 else config.time_limit, 
                 eval_eps=args.eval_eps)
 else:
-  dv2.train(env, config, is_pure_train=args.only_train, is_pure_datagen=args.only_datagen)
+  dv2.train(env, config, time_limit=config.time_limit, is_pure_train=args.only_train, is_pure_datagen=args.only_datagen)
 
 env.close()
