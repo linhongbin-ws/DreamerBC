@@ -29,16 +29,16 @@ from common import JSONLOutput
 from common import TensorBoardOutput
 from tqdm import tqdm
 
-configs = yaml.safe_load(
-    (pathlib.Path(__file__).parent / 'configs.yaml').read_text())
-defaults = common.Config(configs.pop('defaults'))
+# configs = yaml.safe_load(
+#     (pathlib.Path(__file__).parent / 'configs.yaml').read_text())
+# defaults = common.Config(configs.pop('defaults'))
 
 import tensorflow as tf
 for gpu in tf.config.experimental.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(gpu, True)
 
     
-def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False, skip_gym_wrap=False):
+def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_datagen=False, skip_gym_wrap=False):
   assert not (is_pure_train and is_pure_datagen)
   tf.config.experimental_run_functions_eagerly(not config.jit)
   logdir = pathlib.Path(config.logdir).expanduser()
@@ -78,7 +78,7 @@ def train(env, config, outputs=None, is_pure_train=False, is_pure_datagen=False,
     env = common.OneHotAction(env)
   else:
     env = common.NormalizeAction(env)
-  env = common.TimeLimit(env, config.time_limit)
+  env = common.TimeLimit(env, time_limit)
 
   if not is_pure_train:
     # prefill agent
