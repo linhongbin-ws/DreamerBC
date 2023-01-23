@@ -1,0 +1,2 @@
+decoder.mlp_keys: '.*'
+encoder.mlp_keys: '.*'
