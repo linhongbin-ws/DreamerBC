@@ -4,7 +4,7 @@ actor_ent: 2e-03
 actor_grad: auto
 actor_grad_mix: 0.1
 actor_grad_weight: 1.0
-actor_opt: {clip: 100, eps: 1e-05, lr: 2e-05, opt: adam, wd: 1e-06}
+actor_opt: {clip: 100, eps: 1e-05, lr: 8e-05, opt: adam, wd: 1e-06}
 actor_type: ActorCritic
 atari_grayscale: true
 bc_agent_retrain: true
@@ -15,7 +15,7 @@ bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: identity
 critic: {act: elu, dist: mse, layers: 4, norm: none, units: 400}
-critic_opt: {clip: 100, eps: 1e-05, lr: 4e-05, opt: adam, wd: 1e-06}
+critic_opt: {clip: 100, eps: 1e-05, lr: 8e-05, opt: adam, wd: 1e-06}
 dataset: {batch: 70, length: 10}
 decoder:
   act: elu
