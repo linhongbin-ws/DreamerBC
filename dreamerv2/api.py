@@ -114,7 +114,7 @@ def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_da
     def per_episode(ep, mode):
       length = len(ep['reward']) - 1
       score = float(ep['reward'].astype(np.float64).sum())
-      print(f'{mode.title()} episode has {length} steps and return {score:.1f}.')
+      print(f'{mode.title()} episode has {length} steps, return {score:.1f} and end state is {ep["state"][-1][0]:d}.')
       logger.scalar(f'{mode}_return', score)
       logger.scalar(f'{mode}_length', length)
       for key, value in ep.items():
