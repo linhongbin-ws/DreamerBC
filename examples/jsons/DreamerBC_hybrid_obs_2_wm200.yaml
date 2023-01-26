@@ -1,0 +1,4 @@
+decoder.mlp_keys: ["gripper_state", "state"]
+encoder.mlp_keys: ["gripper_state", "state"]
+rssm: {hidden: 200, deter: 200}
+model_opt.lr: 3e-4
