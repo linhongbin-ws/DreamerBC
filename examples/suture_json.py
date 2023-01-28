@@ -28,7 +28,7 @@ parser.add_argument('--arm', type=str, default='psm2') # [psm1, psm2]
 parser.add_argument('--preprocess-type', type=str, default='segment_script') # [segment_net, mixdepth,origin, segment_script]
 parser.add_argument('--image-type', type=str, default='zoom_needle_gripper_boximage') #[zoom_needle_gripper_boximage, zoom_needle_boximage]
 parser.add_argument('--segment-net-file', type=str, default="none")
-parser.add_argument('--reset', type=str, default="auto")
+parser.add_argument('--reset', type=str, default="manual") #["auto", "manual"]
 parser.add_argument('--clutch', type=int, default=6)
 
 args = parser.parse_args()
