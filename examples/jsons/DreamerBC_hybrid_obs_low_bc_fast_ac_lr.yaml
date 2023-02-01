@@ -1,0 +1,5 @@
+decoder.mlp_keys: '.*'
+encoder.mlp_keys: '.*'
+bc_grad_weight: 1
+actor_opt.lr: 8e-05
+critic_opt.lr: 8e-05
