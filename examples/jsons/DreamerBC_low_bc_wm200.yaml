@@ -1,0 +1,3 @@
+bc_grad_weight: 1
+rssm: {hidden: 200, deter: 200}
+model_opt.lr: 3e-4
