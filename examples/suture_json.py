@@ -61,6 +61,8 @@ if not args.only_eval:
     'seed': args.seed,
     'prefill' : args.prefill
                   })
+  if args.timelimit < 0:
+    config = config.update({"time_limit": args.timelimit})
 else:
   assert args.json!="", "please specify json file"
   configs = yaml.safe_load((pathlib.Path(args.json)).read_text())
