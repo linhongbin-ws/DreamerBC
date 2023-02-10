@@ -27,9 +27,9 @@ parser.add_argument('--platform', type=str, default='phantom') #[cuboid, phantom
 # [standard, l_shape]
 parser.add_argument('--needle', type=str, default='standard')
 parser.add_argument('--arm', type=str, default='psm2') # [psm1, psm2]
-parser.add_argument('--preprocess-type', type=str, default='segment_script') # [segment_net, mixdepth,origin, segment_script]
+parser.add_argument('--preprocess-type', type=str, default='segment_net') # [segment_net, mixdepth,origin, segment_script]
 parser.add_argument('--image-type', type=str, default='zoom_needle_gripper_boximage') #[zoom_needle_gripper_boximage, zoom_needle_boximage]
-parser.add_argument('--segment-net-file', type=str, default="none")
+parser.add_argument('--segnet-dir', type=str, default="none")
 parser.add_argument('--reset', type=str, default="manual") #["auto", "manual"]
 parser.add_argument('--clutch', type=int, default=6)
 
@@ -71,7 +71,7 @@ else:
   config = common.Config(configs)
 
 if args.preprocess_type == "segment_net":
-  assert args.segment_net_file!="none", "please specify a weight file for segmentation net"
+  assert args.segnet_dir!="none", "please specify a weight file for segmentation net"
 env = make_env(
               robot_type=args.robot,
              platform_type=args.platform, #[cuboid, phantom]
@@ -83,7 +83,7 @@ env = make_env(
              clutch_start_engaged=args.clutch,
              resize_resolution=64,
              timelimit=config.time_limit, 
-            segment_net_file=args.segment_net_file,
+            segment_net_file=args.segnet_dir,
             #  is_depth=True, 
             #  is_idle_action=False,
              is_ds4_oracle=False,

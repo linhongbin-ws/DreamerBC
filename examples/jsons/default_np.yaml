@@ -10,7 +10,7 @@ atari_grayscale: true
 bc_agent_retrain: true
 bc_wm_retrain: true
 bc_dir: ./data/suture/needle_picking/ambf/dream2suture/train_episodes/oracle
-bc_grad_weight: 10.0
+bc_grad_weight: 1.0
 bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: identity
