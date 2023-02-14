@@ -1,0 +1,2 @@
+actor_opt.lr: 1e-05
+critic_opt.lr: 2e-05
