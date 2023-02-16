@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--json', type=str, default="")
 parser.add_argument('--section', type=int, default=1)
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--eval-eps', type=int, default=20)
+parser.add_argument('--eval-eps', type=int, default=10)
 parser.add_argument('--only-train', action='store_true')
 parser.add_argument('--only-datagen', action='store_true')
 parser.add_argument('--only-eval', action='store_true')
@@ -27,7 +27,7 @@ parser.add_argument('--platform', type=str, default='phantom') #[cuboid, phantom
 # [standard, l_shape]
 parser.add_argument('--needle', type=str, default='standard')
 parser.add_argument('--arm', type=str, default='psm2') # [psm1, psm2]
-parser.add_argument('--preprocess-type', type=str, default='segment_net') # [segment_net, mixdepth,origin, segment_script]
+parser.add_argument('--preprocess-type', type=str, default='segment_script') # [segment_net, mixdepth,origin, segment_script]
 parser.add_argument('--image-type', type=str, default='DHA_needle') #
 parser.add_argument('--segnet-dir', type=str, default="none")
 parser.add_argument('--reset', type=str, default="manual") #["auto", "manual"]
