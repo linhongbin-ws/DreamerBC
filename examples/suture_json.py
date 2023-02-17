@@ -20,7 +20,6 @@ parser.add_argument('--only-datagen', action='store_true')
 parser.add_argument('--only-eval', action='store_true')
 parser.add_argument('--prefill', type=int, default=8000) # <0 means following default settings
 parser.add_argument('--timelimit', type=int, default=-1) # <0 means consistent with config file
-parser.add_argument('--timelimit', type=int, default=-1) # <0 means consistent with config file
 # env related
 parser.add_argument('--robot', type=str, default='ambf') # [ambf, dvrk]
 parser.add_argument('--platform', type=str, default='phantom') #[cuboid, phantom]
