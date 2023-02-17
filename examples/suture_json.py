@@ -20,7 +20,7 @@ parser.add_argument('--only-datagen', action='store_true')
 parser.add_argument('--only-eval', action='store_true')
 parser.add_argument('--prefill', type=int, default=8000) # <0 means following default settings
 parser.add_argument('--timelimit', type=int, default=-1) # <0 means consistent with config file
-
+parser.add_argument('--timelimit', type=int, default=-1) # <0 means consistent with config file
 # env related
 parser.add_argument('--robot', type=str, default='ambf') # [ambf, dvrk]
 parser.add_argument('--platform', type=str, default='phantom') #[cuboid, phantom]
@@ -32,6 +32,7 @@ parser.add_argument('--image-type', type=str, default='DHA_needle') #
 parser.add_argument('--segnet-dir', type=str, default="none")
 parser.add_argument('--reset', type=str, default="manual") #["auto", "manual"]
 parser.add_argument('--clutch', type=int, default=6)
+parser.add_argument('--scalarobs-encode', type=bool, default=True) 
 
 args = parser.parse_args()
 
@@ -77,7 +78,7 @@ env = make_env(
              platform_type=args.platform, #[cuboid, phantom]
               preprocess_type=args.preprocess_type, 
              image_type=args.image_type,
-            #  scalar2image_obs_key=["gripper_state", "state"],
+             scalar2image_obs_key= ["gripper_state", "state"] if args.scalarobs_encode else [],
              action_arm_device=args.arm,
             reset_needle_mode=args.reset,
              clutch_start_engaged=args.clutch,
