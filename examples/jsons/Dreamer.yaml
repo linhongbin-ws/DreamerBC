@@ -1,1 +1,3 @@
 bc_grad_weight: 0.0
+decoder.mlp_keys: ["gripper_state", "state"]
+encoder.mlp_keys: ["gripper_state", "state"]
