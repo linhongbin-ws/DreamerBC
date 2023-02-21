@@ -1,0 +1,4 @@
+prefill: 800
+model_opt.lr: 2e-6
+actor_opt.lr: 2e-07
+critic_opt.lr: 4e-07

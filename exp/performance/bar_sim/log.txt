@@ -1,0 +1,3 @@
+command:
+
+python examples/suture_json.py --only-eval --json ./data/suture/needle_picking/ambf-phantom-psm2-segment_script-zoom_needle_boximage-prefill8000-clutch6/DreamerBC_low_bc/1/model/144000_90_percent/config.yaml  --seed 14 --eval-eps 50

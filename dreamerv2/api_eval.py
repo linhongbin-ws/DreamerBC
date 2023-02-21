@@ -147,8 +147,7 @@ def eval_agnt(env, config, logdir, time_limit=-1, eval_eps=50):
       (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']
         ) if (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']) >= 1 else 0
   logger.add(eval_stat, prefix='eval')
-  if should_video_eval(step):
-    logger.add(agnt.report(next(eval_dataset)), prefix='eval')
+  # logger.add(agnt.report(next(eval_dataset)), prefix='eval')
   print("==============")
   print(f"# eval rate: {eval_stat['sucess_eps_rate']} !!")
   print(f"# eval filter rate: {eval_stat['sucess_eps_filter_rate']} !!")
