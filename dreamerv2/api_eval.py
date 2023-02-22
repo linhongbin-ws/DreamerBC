@@ -5,8 +5,10 @@ import pathlib
 import re
 import sys
 import warnings
-import tracemalloc
-import linecache
+# import tracemalloc
+# import linecache
+import pandas as pd
+import time
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger().setLevel('ERROR')
@@ -119,7 +121,7 @@ def eval_agnt(env, config, logdir, time_limit=-1, eval_eps=50):
     print("states:",ep['state'])
     if ep['state'][-1][0] == 1.0:
       eval_stat['sucess_eps_count'] += 1
-    if ep['state'][-1][0] >=3.0:
+    if ep['state'][-1][0] ==3.0:
       eval_stat['filter_cases_cnt'] +=1
       print(f"Bad filter case {ep['state'][-1]}!")
       _str = f"filter_state_{ep['state'][-1]}_cnt"
@@ -137,7 +139,7 @@ def eval_agnt(env, config, logdir, time_limit=-1, eval_eps=50):
   for k,v in eval_stat.items():
     eval_stat[k] = 0
 
-  while (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']) < eval_eps and eval_stat['eps_cnt'] < eval_eps:
+  while (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']) < eval_eps and eval_stat['eps_cnt'] < 2*eval_eps:
     eval_driver(eval_policy, episodes=1)
 
   eval_stat['average_scores'] = eval_stat['average_scores'] / \
@@ -148,6 +150,9 @@ def eval_agnt(env, config, logdir, time_limit=-1, eval_eps=50):
         ) if (eval_stat['eps_cnt'] - eval_stat['filter_cases_cnt']) >= 1 else 0
   logger.add(eval_stat, prefix='eval')
   # logger.add(agnt.report(next(eval_dataset)), prefix='eval')
+  df = pd.DataFrame.from_dict({k:[v] for k,v in eval_stat.items()})
+  file_name = "eval_result_" + time.strftime("%Y%m%d-%H%M%S") + ".csv"
+  df.to_csv(evaldir/file_name)
   print("==============")
   print(f"# eval rate: {eval_stat['sucess_eps_rate']} !!")
   print(f"# eval filter rate: {eval_stat['sucess_eps_filter_rate']} !!")
