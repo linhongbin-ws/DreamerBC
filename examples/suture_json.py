@@ -25,6 +25,7 @@ parser.add_argument('--timelimit', type=int, default=-1) # <0 means consistent w
 # env related
 parser.add_argument('--robot', type=str, default='ambf') # [ambf, dvrk]
 parser.add_argument('--platform', type=str, default='phantom') #[cuboid, phantom]
+parser.add_argument('--needle', type=str, default='standard') #
 parser.add_argument('--arm', type=str, default='psm2') # [psm1, psm2]
 parser.add_argument('--preprocess-type', type=str, default='segment_script') # [segment_net, mixdepth,origin, segment_script]
 parser.add_argument('--image-type', type=str, default='zoom_needle_boximage') #[zoom_needle_gripper_boximage, zoom_needle_boximage]
@@ -73,6 +74,7 @@ if args.preprocess_type == "segment_net":
 env = make_env(
               robot_type=args.robot,
              platform_type=args.platform, #[cuboid, phantom]
+            needle_type=args.needle,
               preprocess_type=args.preprocess_type, 
              image_type=args.image_type,
              scalar2image_obs_key=[] if args.no_encoding else ["gripper_state", "state"],
