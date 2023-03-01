@@ -47,10 +47,9 @@ plt.plot([0.5,0.5],[0,1.0],linestyle="--",color='k')
 plt.ylabel("Success Rate")
 ax=plt.gca()  #gca:get current axis得到当前轴
 #设置图片的右边框和上边框为不显示
-ax.spines['right'].set_color('none')
-ax.spines['top'].set_color('none')
-plt.text(-0.3,1,'Train',{'fontsize':18}, color = "b", )
-plt.text(2.2,1,'Transfer',{'fontsize':18}, color = "b",)
+ax.set_ylim([0, 1])
+plt.text(-0.3,1,'Train',{'fontsize':18}, color = "tab:blue", )
+plt.text(2.2,1,'Transfer',{'fontsize':18}, color = "tab:blue",)
 plt.savefig("./data/exp/varation_peformance.pdf",bbox_inches='tight')
 if args.show:
     plt.show()
