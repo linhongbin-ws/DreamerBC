@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import numpy as np
 
-figure(figsize=(8, 6), dpi=200)
+figure(figsize=(12, 6), dpi=200)
 plt.rcParams.update({'font.size': 20})
 #========================================
 parser = argparse.ArgumentParser()
