@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import numpy as np
 
-figure(figsize=(8, 6), dpi=200)
+figure(figsize=(12, 6), dpi=200)
 plt.rcParams.update({'font.size': 20})
 #========================================
 parser = argparse.ArgumentParser()
@@ -48,8 +48,8 @@ plt.ylabel("Success Rate")
 ax=plt.gca()  #gca:get current axis得到当前轴
 #设置图片的右边框和上边框为不显示
 ax.set_ylim([0, 1])
-plt.text(-0.3,1,'Train',{'fontsize':18}, color = "tab:blue", )
-plt.text(2.2,1,'Transfer',{'fontsize':18}, color = "tab:blue",)
+plt.text(-0.3,0.93,'Train',{'fontsize':18}, color = "tab:blue", )
+plt.text(2.2,0.93,'Transfer',{'fontsize':18}, color = "tab:blue",)
 plt.savefig("./data/exp/varation_peformance.pdf",bbox_inches='tight')
 if args.show:
     plt.show()
