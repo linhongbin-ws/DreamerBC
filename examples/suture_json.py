@@ -33,6 +33,7 @@ parser.add_argument('--segment-net-file', type=str, default="none")
 parser.add_argument('--reset', type=str, default="manual") #["auto", "manual"]
 parser.add_argument('--clutch', type=int, default=6)
 parser.add_argument('--no-encoding', action='store_true')
+parser.add_argument('--noise-depth', type=float, default=0)
 
 args = parser.parse_args()
 
@@ -90,6 +91,7 @@ env = make_env(
              is_visualizer=False,
             #  is_visualizer_blocking=True, 
              is_dummy=config.is_pure_train,
+            depth_gaussion_noise_scale=args.noise_depth,
 )
 
 
