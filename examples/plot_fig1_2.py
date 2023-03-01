@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--csv1', type=str, default="./data/exp/performance/bars/eval_result_20230223-174501.csv")
 # parser.add_argument('--csv2', type=str, default="./data/exp/performance/learning_curve/run-ours-tag-scalars_eval_sucess_eps_rate.csv")
 # parser.add_argument('--linewidth', type=int, default=4)
+parser.add_argument('--show', action="store_true")
 args = parser.parse_args()
 
 df1 = pd.read_csv(args.csv1)

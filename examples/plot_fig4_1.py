@@ -13,7 +13,7 @@ parser.add_argument('--csv3', type=str, default="./data/exp/ablation/csv/run-03-
 parser.add_argument('--csv4', type=str, default="./data/exp/ablation/csv/run-04-no_virtual_clutch-tag-scalars_eval_sucess_eps_filter_rate.csv")
 parser.add_argument('--csv5', type=str, default="./data/exp/ablation/csv/run-05-ours-tag-scalars_eval_sucess_eps_filter_rate.csv")
 parser.add_argument('--linewidth', type=int, default=4)
-parser.add_argument('--smooth', type=int, default=0.7)
+parser.add_argument('--smooth', type=int, default=0.3)
 parser.add_argument('--maxstep', type=int, default=140000)
 parser.add_argument('--show', action="store_true")
 args = parser.parse_args()
