@@ -70,6 +70,7 @@ class Agent(common.Module):
     metrics = {}
     if bc_data is None:
       _state = state if self.config.train_carrystate else None
+      _bc_state = None
     else:
       _state = state[0] if self.config.train_carrystate else None
       _bc_state = state[1]

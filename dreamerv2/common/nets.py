@@ -13,7 +13,7 @@ class EnsembleRSSM(common.Module):
 
   def __init__(
       self, ensemble=5, stoch=30, deter=200, hidden=200, discrete=False,
-      act='elu', norm='none', std_act='softplus', min_std=0.1, deter_quant=200):
+      act='elu', norm='none', std_act='softplus', min_std=0.1, deter_quant=0):
     super().__init__()
     self._ensemble = ensemble
     self._stoch = stoch
