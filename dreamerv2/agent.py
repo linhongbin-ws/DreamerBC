@@ -316,6 +316,9 @@ class ActorCritic(common.Module):
       self.rewnorm = None
     else:
       self.rewnorm = common.StreamNorm(**self.config.reward_norm)
+    
+    import plan
+    self.planner = {"cem": plan.CEM(act_space), "":None}[config.planner]
 
   def train(self, world_model, start, is_terminal, reward_fn, bc_data=None, bc_state=None,**kwargs):
     metrics = {}
@@ -326,6 +329,8 @@ class ActorCritic(common.Module):
     # training the action that led into the first step anyway, so we can use
     # them to scale the whole sequence.
     with tf.GradientTape() as actor_tape:
+      if self.planner is not None:
+        self.planner.plan(world_model, self.actor, start, is_terminal,  self.target,reward_fn, self.rewnorm,)
       seq = world_model.imagine(self.actor, start, is_terminal, hor)
       reward = reward_fn(seq)
       if self.rewnorm is not None:
