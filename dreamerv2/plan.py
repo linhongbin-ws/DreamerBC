@@ -7,7 +7,7 @@ from tensorflow_probability import distributions as tfd
 class MixPolicy(object):
     def __init__(self, mix, mean, std, prior_policy, amount):
         self.mix = mix
-        flatten = lambda x: x.reshape((x.shape[0]*x.shape[1])+x.shape[2:])
+        flatten = lambda x: x.reshape([-1] + list(x.shape[2:]))
         self.mean = flatten(tf.stack([mean]*amount, axis=0))
         self.std = flatten(tf.stack([std]*amount, axis=0))
         self.prior_policy = prior_policy
@@ -81,8 +81,9 @@ class CEM(object):
             critic = target * weight[:-1]
             critic = critic[0,:].reshape((amount,batch_size*batch_length,))
             critic = tf.transpose(critic, [1,0])
-            sort_order = tf.argsort(critic, axis=1,direction='DESCENDING')
-            best_order = sort_order[:,:self.topk]
+            # sort_order = tf.argsort(critic, axis=1,direction='DESCENDING')
+            # best_order = sort_order[:,:self.topk]
+            best_order = tf.math.top_k(critic, k=self.topk, sorted=True,).indices
             actions = seq['action'].reshape((seq['action'].shape[0], amount, batch_size*batch_length,seq['action'].shape[2]))
             actions = tf.transpose(actions, [1,2,0,3])
             collects = []
@@ -92,8 +93,8 @@ class CEM(object):
             std = tf.stack([tf.math.reduce_std(v, axis=0) for v in collects],axis=0)
         
         states = seq['feat'][:-1]
-        states = states.reshape((states.shape[0],batch_size*batch_length, amount,states.shape[2]))
-        states = tf.transpose(states, [1,2,0,3])
+        states = states.reshape((states.shape[0],amount, batch_size*batch_length,states.shape[2]))
+        states = tf.transpose(states, [2,1,0,3])
         states = states[:,0,:self.loss_horizon, :]
         actions = actor_model(tf.stop_gradient(states))    
         like = -tf.cast(actions.log_prob(mean[:,1:self.loss_horizon+1,:]), tf.float32).mean() 
