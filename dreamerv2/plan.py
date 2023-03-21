@@ -98,4 +98,5 @@ class CEM(object):
         actions = actor_model(tf.stop_gradient(states))    
         like = -tf.cast(actions.log_prob(mean[:,1:self.loss_horizon+1,:]), tf.float32).mean() 
         loss = like * self.loss_scale
-        return loss
+        metrics = {'cem_loss': like}
+        return loss, metrics

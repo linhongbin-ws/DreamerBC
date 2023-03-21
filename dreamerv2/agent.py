@@ -329,8 +329,7 @@ class ActorCritic(common.Module):
     # training the action that led into the first step anyway, so we can use
     # them to scale the whole sequence.
     with tf.GradientTape() as actor_tape:
-      if self.planner is not None:
-        self.planner.plan(world_model, self.actor, start, is_terminal,  self.target,reward_fn, self.rewnorm,)
+
       seq = world_model.imagine(self.actor, start, is_terminal, hor)
       reward = reward_fn(seq)
       if self.rewnorm is not None:
@@ -343,7 +342,12 @@ class ActorCritic(common.Module):
       # if bc_data is None:
       actor_loss, mets3 = self.actor_loss(seq, target)
       mets3['actor_pure_loss'] = actor_loss
-      # else:
+
+      if self.planner is not None:
+        plan_loss, plan_metrics = self.planner.plan(world_model, self.actor, start, is_terminal,  self.target,reward_fn, self.rewnorm,)
+        metrics.update(**plan_metrics)
+        actor_loss+=plan_loss 
+
       if bc_data is not None and self.config.bc_loss:
         data = world_model.preprocess(bc_data)
         embed = world_model.encoder(data)
