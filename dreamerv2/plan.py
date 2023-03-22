@@ -19,8 +19,8 @@ class MixPolicy(object):
             _std = self.std[:,self.cnt,:]
             dist = tfd.Normal(_mean, 
                             _std,
-                            )
-            return dist
+                            ).sample()
+            return common.OneHotDist(dist)
         else:
             return self.prior_policy(features)
      
@@ -59,16 +59,17 @@ class CEM(object):
                 ):
         
         amount, batch_size, batch_length =self.amount, self.batch, start_state_is_terminal.shape[1]
-        _start_state = {k: tf.stack([v[:batch_size, :]]*amount, axis=0)
-                                        for k, v in start_state.items()}
-        _start_state_is_terminal = tf.stack([start_state_is_terminal[:batch_size,:]]*amount, axis=0)
-        _start_state = {k:v.reshape((amount,batch_size*batch_length,)+ v.shape[3:]) for k, v in _start_state.items()}
-        _start_state_is_terminal = _start_state_is_terminal.reshape((amount,batch_size*batch_length,)+ _start_state_is_terminal.shape[3:])
+
         mean = tf.constant((self.act_space.low + self.act_space.high)/2)
         std = tf.ones(mean.shape)
         mean = tf.tile(tf.expand_dims(tf.expand_dims(mean, axis=0), axis=0), [batch_size*batch_length,self.horizon+1,1])
         std = tf.tile(tf.expand_dims(tf.expand_dims(std, axis=0), axis=0), [batch_size*batch_length,self.horizon+1,1])
         for i in range(self.iteration):
+            _start_state = {k: tf.stack([v[:batch_size, :]]*amount, axis=0)
+                                for k, v in start_state.items()}
+            _start_state_is_terminal = tf.stack([start_state_is_terminal[:batch_size,:]]*amount, axis=0)
+            _start_state = {k:v.reshape((amount,batch_size*batch_length,)+ v.shape[3:]) for k, v in _start_state.items()}
+            _start_state_is_terminal = _start_state_is_terminal.reshape((amount,batch_size*batch_length,)+ _start_state_is_terminal.shape[3:])
             policy = MixPolicy(self.prior_mix, mean, std, actor_model, self.amount)
             seq = world_model.imagine(policy, _start_state, _start_state_is_terminal, self.horizon)
             reward = reward_fn(seq)
