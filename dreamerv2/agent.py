@@ -318,7 +318,13 @@ class ActorCritic(common.Module):
       self.rewnorm = common.StreamNorm(**self.config.reward_norm)
     
     import plan
-    self.planner = {"cem": plan.CEM(act_space), "":None}[config.planner]
+    if config.planner.type is None:
+      self.planner = None 
+    else:
+      name = config.planner.type
+      args = {k: v for k, v in config.planner.items() if k!="type"}
+      func_call = getattr(plan, name)
+      self.planner = func_call(act_space, **args)
 
   def train(self, world_model, start, is_terminal, reward_fn, bc_data=None, bc_state=None,**kwargs):
     metrics = {}
