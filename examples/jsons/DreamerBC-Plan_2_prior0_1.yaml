@@ -1,0 +1,4 @@
+# planner: {type: CEM, horizon: 16, amount: 10,topk: 3,iteration: 10,prior_mix: 0.5,batch: 2,loss_horizon: 1,loss_scale: 0.1,}
+planner.topk: 10
+planner.amount: 50
+planner.prior_mix: 0.1
