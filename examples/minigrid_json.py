@@ -26,7 +26,7 @@ else:
     baseline = "DreamerBC-Plan"
 
 
-logdir = str(pathlib.Path('./data/minigrid') / baseline / str(args.section))
+logdir = str(pathlib.Path('./data/minigrid') /args.env / baseline / str(args.section))
 config = config.update({
 'bc_dir': '',
 'logdir': logdir,         
