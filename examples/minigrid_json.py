@@ -11,6 +11,7 @@ parser.add_argument('--json', type=str, default="")
 parser.add_argument('--section', type=int, default=1)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--debug', action='store_true')
+parser.add_argument('--env', type=str, default="MiniGrid-DoorKey-6x6-v0")
 args = parser.parse_args()
 
 
@@ -33,7 +34,7 @@ config = config.update({
 'jit': not args.debug,
                   })
 
-env = gym.make('MiniGrid-DoorKey-6x6-v0')
+env = gym.make(args.env)
 env = gym_minigrid.wrappers.RGBImgPartialObsWrapper(env)
 env.observation_space = Dict({k:v for k,v in env.observation_space.items() if k != 'mission'})
 dv2.train(env, config,time_limit=config.time_limit)

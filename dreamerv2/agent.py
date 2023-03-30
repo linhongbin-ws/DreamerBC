@@ -318,7 +318,7 @@ class ActorCritic(common.Module):
       self.rewnorm = common.StreamNorm(**self.config.reward_norm)
     
     import plan
-    if config.planner.type is None:
+    if config.planner.type=='none':
       self.planner = None 
     else:
       name = config.planner.type
