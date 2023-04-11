@@ -45,8 +45,8 @@ encoder:
   norm: none
 envs: 1
 envs_parallel: none
-eval_eps: 1
-eval_every: 100000.0
+eval_eps: 10
+eval_every: 4000.0
 eval_noise: 0.0
 eval_state_mean: false
 eval_success_reward: 0.99
