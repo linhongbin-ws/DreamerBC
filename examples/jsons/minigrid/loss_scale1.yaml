@@ -1,0 +1,2 @@
+planner.loss_scale: 1
+actor_grad_weight: 0.1
