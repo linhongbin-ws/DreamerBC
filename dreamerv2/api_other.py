@@ -231,7 +231,7 @@ def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_da
     print("===========================================")
     print("Evaluate phase")
     eval_driver.reset()
-    eval_driver(eval_policy, episodes=1)
+    eval_driver(eval_policy, episodes=config.eval_eps)
     if should_video_eval(step):
       logger.add(agnt.report(next(eval_dataset)), prefix='eval')
 
