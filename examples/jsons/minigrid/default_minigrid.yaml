@@ -79,7 +79,7 @@ model_opt: {clip: 100, eps: 1e-05, lr: 0.0001, opt: adam, wd: 1e-06}
 offline_step: 20000000
 precision: 16
 pred_discount: true
-prefill: 100
+prefill: 100000
 prefill_agent: random
 pretrain: 1
 render_size: [64, 64]
