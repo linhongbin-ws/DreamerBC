@@ -7,11 +7,11 @@ actor_grad_weight: 1.0
 actor_opt: {clip: 100, eps: 1e-05, lr: 8e-05, opt: adam, wd: 1e-06}
 actor_type: ActorCritic
 atari_grayscale: true
-bc_agent_retrain: false
-bc_wm_retrain: false
+bc_agent_retrain: true
+bc_wm_retrain: true
 bc_dir: ''
 bc_grad_weight: 1.0
-bc_loss: false
+bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: tanh
 
@@ -79,7 +79,7 @@ model_opt: {clip: 100, eps: 1e-05, lr: 0.0001, opt: adam, wd: 1e-06}
 offline_step: 20000000
 precision: 16
 pred_discount: true
-prefill: 100000
+prefill: 100
 prefill_agent: random
 pretrain: 1
 render_size: [64, 64]

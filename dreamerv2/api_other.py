@@ -28,6 +28,7 @@ from common import TerminalOutput
 from common import JSONLOutput
 from common import TensorBoardOutput
 from tqdm import tqdm
+import shutil 
 
 # configs = yaml.safe_load(
 #     (pathlib.Path(__file__).parent / 'configs.yaml').read_text())
@@ -38,7 +39,7 @@ for gpu in tf.config.experimental.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(gpu, True)
 
     
-def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_datagen=False, skip_gym_wrap=False):
+def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_datagen=False, skip_gym_wrap=False, bc_dir=''):
   assert not (is_pure_train and is_pure_datagen)
   tf.config.experimental_run_functions_eagerly(not config.jit)
   logdir = pathlib.Path(config.logdir).expanduser()
@@ -48,6 +49,16 @@ def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_da
   config.save(logdir / 'config.yaml')
   print(config, '\n')
   print('Logdir', logdir)
+
+  if bc_dir is not '':
+    oracle_dir = logdir / 'train_episodes' / 'oracle'
+    if oracle_dir.exists():
+      shutil.rmtree(str(oracle_dir))
+    _ = shutil.copytree(bc_dir, oracle_dir) 
+    bc_replay = common.Replay(oracle_dir, **config.replay)
+    bc_dataset = iter(bc_replay.dataset(**config.dataset))
+  else:
+    bc_dataset = None
 
   train_replay = common.Replay(logdir / 'train_episodes', **config.replay)
   eval_replay = common.Replay(logdir / 'eval_episodes', **dict(
@@ -175,13 +186,7 @@ def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_da
 
 
       
-  if config.bc_dir is not '':
-    print(config.bc_dir)
-    bc_dir = pathlib.Path(config.bc_dir)
-    bc_replay = common.Replay(bc_dir, **config.replay)
-    bc_dataset = iter(bc_replay.dataset(**config.dataset))
-  else:
-    bc_dataset = None
+
   bc_func = lambda dataset: next(dataset) if dataset is not None else None
   train_agent = common.CarryOverState(agnt.train, is_bc=bc_dataset is not None)
   train_agent(next(train_dataset), bc_func(bc_dataset))
