@@ -58,6 +58,8 @@ def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_da
     if config.bc:
       bc_replay = common.Replay(oracle_dir, **config.replay)
       bc_dataset = iter(bc_replay.dataset(**config.dataset))
+    else:
+      bc_dataset = None
   else:
     bc_dataset = None
 
