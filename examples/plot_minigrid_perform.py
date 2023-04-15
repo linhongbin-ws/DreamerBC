@@ -8,10 +8,10 @@ from matplotlib.pyplot import figure
 #========================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--csv1', type=str, default="./data/exp2/minigrid/performance/run-2023-04-14-trs2_no_plan_8-tag-scalars_eval_return.csv")
-parser.add_argument('--csv2', type=str, default="./data/exp2/minigrid/performance/run-2023-04-14-a6000_no_actorgrad_8-tag-scalars_eval_return.csv")
+parser.add_argument('--csv2', type=str, default="./data/exp2/minigrid/performance/run-2023-04-15-3090_no_actorgrad_10-tag-scalars_eval_return.csv")
 parser.add_argument('--csv3', type=str, default="./data/exp2/minigrid/performance/run-2023-04-14-3090_8-tag-scalars_eval_return.csv")
 parser.add_argument('--linewidth', type=int, default=4)
-parser.add_argument('--smooth', type=int, default=0.1)
+parser.add_argument('--smooth', type=int, default=0.0001)
 parser.add_argument('--maxstep', type=int, default=220000)
 parser.add_argument('--show', action="store_true")
 args = parser.parse_args()
@@ -52,7 +52,7 @@ def plot_line(_df, label, linewidth, color):
     plt.plot(_df["Step"], _df["smooth"], label=label,linewidth=args.linewidth, color=lighten_color(color,amount=0.5), alpha=1)
 
 plot_line(df1, "Dreamer", args.linewidth, color='tab:brown')
-plot_line(df2, "CEM+BC", args.linewidth, color='tab:red')
+plot_line(df2, "CEM", args.linewidth, color='tab:red')
 plot_line(df3, "Ours", args.linewidth, color='tab:blue')
 
 plt.ticklabel_format(style='sci', axis='x',scilimits=(0,4))
@@ -62,7 +62,7 @@ plt.xlabel("Timestep")
 plt.ylabel("Average Return")
 
 
-plt.savefig("./data/exp2/minigrid/performance.pdf",bbox_inches='tight')
+plt.savefig("./data/exp2/minigrid/LFS_peformance.pdf",bbox_inches='tight')
 if args.show:
     plt.show()
 # print(df1)

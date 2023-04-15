@@ -55,7 +55,8 @@ def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_da
     if oracle_dir.exists():
       shutil.rmtree(str(oracle_dir))
     _ = shutil.copytree(bc_dir, oracle_dir) 
-    bc_replay = common.Replay(oracle_dir, **config.replay)
+    if config.bc:
+      bc_replay = common.Replay(oracle_dir, **config.replay)
     bc_dataset = iter(bc_replay.dataset(**config.dataset))
   else:
     bc_dataset = None
@@ -159,10 +160,8 @@ def train(env, config, time_limit, outputs=None, is_pure_train=False, is_pure_da
 
   while True:
     try:
-      print("kkkkkkkkkkkkkkkkk")
       train_dataset = iter(train_replay.dataset(**config.dataset))
       next(train_dataset)
-      print("nnnnnnnnnnnnnnnnn")
     except Exception as e:
       print("encounter error:")
       print(e)

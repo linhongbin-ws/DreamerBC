@@ -28,7 +28,8 @@ if args.json != "":
 else:
     baseline = "DreamerBC-Plan"
 
-
+if args.bc != "":
+    baseline = "oracle-" + baseline
 logdir = str(pathlib.Path('./data/minigrid') /args.env / baseline / str(args.section))
 config = config.update({
 'bc_dir': '',

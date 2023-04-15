@@ -3,10 +3,11 @@ actor: {act: elu, dist: auto, layers: 4, min_std: 0.1, norm: none, units: 400}
 actor_ent: 0.003
 actor_grad: auto
 actor_grad_mix: 0.1
-actor_grad_weight: 1.0
+actor_grad_weight: 0.1
 actor_opt: {clip: 100, eps: 1e-05, lr: 8e-05, opt: adam, wd: 1e-06}
 actor_type: ActorCritic
 atari_grayscale: true
+bc: true
 bc_agent_retrain: true
 bc_wm_retrain: true
 bc_dir: ''
