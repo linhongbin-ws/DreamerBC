@@ -15,7 +15,7 @@ parser.add_argument('--csv3', type=str,
                     default="./data/exp2/minigrid/performance/run-oracle-DreamerBC-Plan-2023-04-16-trs_13-tag-scalars_eval_return.csv")
 parser.add_argument('--linewidth', type=int, default=4)
 parser.add_argument('--smooth', type=int, default=0.0001)
-parser.add_argument('--maxstep', type=int, default=220000)
+parser.add_argument('--maxstep', type=int, default=90000)
 parser.add_argument('--show', action="store_true")
 args = parser.parse_args()
 

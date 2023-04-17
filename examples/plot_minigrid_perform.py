@@ -9,10 +9,11 @@ from matplotlib.pyplot import figure
 parser = argparse.ArgumentParser()
 parser.add_argument('--csv1', type=str, default="./data/exp2/minigrid/performance/run-2023-04-14-trs2_no_plan_8-tag-scalars_eval_return.csv")
 parser.add_argument('--csv2', type=str, default="./data/exp2/minigrid/performance/run-2023-04-15-3090_no_actorgrad_10-tag-scalars_eval_return.csv")
-parser.add_argument('--csv3', type=str, default="./data/exp2/minigrid/performance/run-2023-04-14-3090_8-tag-scalars_eval_return.csv")
+parser.add_argument('--csv3', type=str,
+                    default="./data/exp2/minigrid/performance/run-2023-04-14-3090_loss_scale1_8-tag-scalars_eval_return.csv")
 parser.add_argument('--linewidth', type=int, default=4)
 parser.add_argument('--smooth', type=int, default=0.0001)
-parser.add_argument('--maxstep', type=int, default=220000)
+parser.add_argument('--maxstep', type=int, default=90000)
 parser.add_argument('--show', action="store_true")
 args = parser.parse_args()
 
@@ -62,7 +63,7 @@ plt.xlabel("Timestep")
 plt.ylabel("Average Return")
 
 
-plt.savefig("./data/exp2/minigrid/LFS_peformance.pdf",bbox_inches='tight')
+plt.savefig("./data/exp2/minigrid/performance_no_oracle.pdf",bbox_inches='tight')
 if args.show:
     plt.show()
 # print(df1)
