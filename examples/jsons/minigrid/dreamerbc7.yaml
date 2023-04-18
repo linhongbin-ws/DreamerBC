@@ -1,0 +1,3 @@
+planner: {type: none}
+actor_grad_weight: 1
+bc_grad_weight: 'linear(0.1,0.00000001,7e4)'
