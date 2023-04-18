@@ -7,10 +7,12 @@ from matplotlib.pyplot import figure
 # plt.rcParams.update({'font.size': 20})
 #========================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--csv1', type=str, default="./data/exp2/minigrid/performance/run-2023-04-14-trs2_no_plan_8-tag-scalars_eval_return.csv")
-parser.add_argument('--csv2', type=str, default="./data/exp2/minigrid/performance/run-2023-04-15-3090_no_actorgrad_10-tag-scalars_eval_return.csv")
+parser.add_argument('--csv1', type=str,
+                    default="./data/exp3/performance/run-oracle-dreamer-2023-04-16-3090-tag-scalars_eval_return.csv")
+parser.add_argument('--csv2', type=str,
+                    default="./data/exp3/performance/run-oracle-bc-2023-04-17-3090-tag-scalars_eval_return.csv")
 parser.add_argument('--csv3', type=str,
-                    default="./data/exp2/minigrid/performance/run-2023-04-14-3090_loss_scale1_8-tag-scalars_eval_return.csv")
+                    default="./data/exp3/performance/run-oracle-dreamerbc7-2023-04-18-trs-tag-scalars_eval_return.csv")
 parser.add_argument('--linewidth', type=int, default=4)
 parser.add_argument('--smooth', type=int, default=0.0001)
 parser.add_argument('--maxstep', type=int, default=90000)
@@ -57,9 +59,9 @@ def plot_line(_df, label, linewidth, color, converge_idx=None, converged_perform
         print("performance: {} {:.3f}".format(label, _df["Value"].iloc[converge_idx:converge_idx+converged_performance_length].mean()))
 
 fig, ax = plt.subplots( nrows=1, ncols=1 )
-plot_line(df1, "Dreamer", args.linewidth, color='tab:brown', converge_idx=15)
-plot_line(df2, "CEM", args.linewidth, color='tab:red', converge_idx=13)
-plot_line(df3, "Ours", args.linewidth, color='tab:blue', converge_idx=7)
+plot_line(df1, "Dreamer", args.linewidth, color='tab:brown', converge_idx=17)
+plot_line(df2, "BC", args.linewidth, color='tab:red', converge_idx=6)
+plot_line(df3, "Ours", args.linewidth, color='tab:blue', converge_idx=11)
 
 idx = 15
 def plot_dash(idx,df):
@@ -83,7 +85,7 @@ plt.tight_layout()
 if args.show:
     plt.show()
 else:
-    fig.savefig("./data/exp2/minigrid/performance_no_oracle.png",dpi=fig.dpi)
+    fig.savefig("./data/exp2/minigrid/performance_oracle2.png",dpi=fig.dpi)
 
 # print(df1)
 # print(df2)

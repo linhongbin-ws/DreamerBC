@@ -8,7 +8,7 @@ from matplotlib.pyplot import figure
 #========================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--csv1', type=str,
-                    default="./data/exp2/minigrid/performance/run-oracle-dreamer_oracle-dreamer-2023-04-16-3090-tag-scalars_eval_return.csv")
+                    default="./data/exp2/minigrid/performance/run-oracle-dreamer-2023-04-16-3090-tag-scalars_eval_return.csv")
 parser.add_argument('--csv2', type=str,
                     default="./data/exp2/minigrid/performance/run-oracle-cem-2023-04-16-a6000_13-tag-scalars_eval_return.csv")
 parser.add_argument('--csv3', type=str,
@@ -50,24 +50,43 @@ df3 = read_csv(args.csv3)
 
 
 # print(df1)
-def plot_line(_df, label, linewidth, color):
+def plot_line(_df, label, linewidth, color, converge_idx=None, converged_performance_length=6):
     plt.plot(_df["Step"], _df["Value"],linewidth=args.linewidth*0.8, color=lighten_color(color,amount=1.5), alpha=0.1)
-    plt.plot(_df["Step"], _df["smooth"], label=label,linewidth=args.linewidth, color=lighten_color(color,amount=0.5), alpha=1)
+    plt.plot(_df["Step"], _df["smooth"], label=label,linewidth=args.linewidth, color=lighten_color(color,amount=0.5), alpha=0.7)
+    if converge_idx is not None:
+        plt.plot([_df["Step"].iloc[converge_idx],_df["Step"].iloc[converge_idx]], [0,_df["Value"].iloc[converge_idx]], color=lighten_color(color,amount=0.8),linewidth=args.linewidth*0.7,linestyle='--',alpha=0.7,label=label)
+        plt.scatter([_df["Step"].iloc[converge_idx]], [0], color=lighten_color(color,amount=0.8),marker="o",s=100, alpha=1,clip_on=False)
+        print("performance: {} {:.3f}".format(label, _df["Value"].iloc[converge_idx:converge_idx+converged_performance_length].mean()))
 
-plot_line(df1, "Dreamer", args.linewidth, color='tab:brown')
-plot_line(df2, "CEM", args.linewidth, color='tab:red')
-plot_line(df3, "Ours", args.linewidth, color='tab:blue')
+fig, ax = plt.subplots( nrows=1, ncols=1 )
+plot_line(df1, "Dreamer", args.linewidth, color='tab:brown', converge_idx=17)
+plot_line(df2, "CEM", args.linewidth, color='tab:red', converge_idx=19)
+plot_line(df3, "Ours", args.linewidth, color='tab:blue', converge_idx=3)
 
+idx = 15
+def plot_dash(idx,df):
+    plt.plot([df["Step"].iloc[idx],df["Step"].iloc[idx]], [0,df["smooth"].iloc[idx]], color='tab:gray',linewidth=args.linewidth*0.7,linestyle='--')
+
+plt.ylim([0, 1])
 plt.ticklabel_format(style='sci', axis='x',scilimits=(0,4))
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1),
-          ncol=3, fancybox=True, shadow=True)
+legend = ax.legend(loc='upper center', bbox_to_anchor=(0.7, 1.28),
+          ncol=3, frameon=False, shadow=True,title="                                  Value:\n Timesteps of Convergence:")
+
+
+title = legend.get_title()
+title.align="right"
+title.set_color("b")
+title.set_x(-500)
+title.set_y(-80)
 plt.xlabel("Timestep")
 plt.ylabel("Average Return")
 
-
-plt.savefig("./data/exp2/minigrid/peformance_oracle.pdf",bbox_inches='tight')
+plt.tight_layout()
 if args.show:
     plt.show()
+else:
+    fig.savefig("./data/exp2/minigrid/performance_oracle.png",dpi=fig.dpi)
+
 # print(df1)
 # print(df2)
 
