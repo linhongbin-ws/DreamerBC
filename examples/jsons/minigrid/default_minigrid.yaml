@@ -11,7 +11,7 @@ bc: true
 bc_agent_retrain: true
 bc_wm_retrain: true
 bc_dir: ''
-bc_grad_weight: 1.0
+bc_grad_weight: 'linear(1e0,1e0,7e4)'
 bc_loss: true
 bc_skip_start_step_num: 2
 clip_rewards: tanh
