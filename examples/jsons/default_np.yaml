@@ -106,3 +106,4 @@ train_mcts_n_playout: 20
 train_only_wm_steps: 0
 train_seq_buffer: 1000
 train_steps: 100
+planner: {type: none}
