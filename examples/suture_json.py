@@ -44,7 +44,7 @@ section = args.section
 
 
 if not args.only_eval:
-  configs = yaml.safe_load((pathlib.Path("./examples/jsons/default_np.yaml")).read_text())
+  configs = yaml.safe_load((pathlib.Path("./examples/jsons/suture_np/default_np.yaml")).read_text())
   config = common.Config(configs)
   if args.json !="":
     configs = yaml.safe_load((pathlib.Path(args.json)).read_text())
