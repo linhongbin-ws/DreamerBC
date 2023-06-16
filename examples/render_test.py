@@ -5,7 +5,7 @@ from dreamerv2.common import RenderImage
 from dreamerv2.common import TerminalOutput
 from dreamerv2.common import JSONLOutput
 from dreamerv2.common import TensorBoardOutput
-from gym_suture.envs.wrapper import make_env 
+from gym_suture.env.wrapper import make_env 
 
 is_visualize = True
 env = make_env('ambf_needle_picking_64x64_discrete',is_visualizer=is_visualize)

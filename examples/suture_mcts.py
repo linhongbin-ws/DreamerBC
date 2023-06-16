@@ -1,4 +1,4 @@
-from gym_suture.envs.wrapper import make_env
+from gym_suture.env.wrapper import make_env
 import dreamerv2.api as dv2
 import argparse
 

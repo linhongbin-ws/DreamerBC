@@ -1,4 +1,4 @@
-from gym_suture.envs.wrapper import make_env
+from gym_suture.env.wrapper import GymSutureEnv
 import dreamerv2.api as dv2
 import dreamerv2.api_eval as dv2_eval
 
@@ -12,6 +12,7 @@ import argparse
 parser = argparse.ArgumentParser()
 # RL related
 parser.add_argument('--json', type=str, default="")
+parser.add_argument('--default-json', type=str, default="./examples/jsons/default_np.yaml")
 parser.add_argument('--section', type=int, default=1)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--eval-eps', type=int, default=20)
@@ -20,6 +21,7 @@ parser.add_argument('--only-datagen', action='store_true')
 parser.add_argument('--only-eval', action='store_true')
 parser.add_argument('--prefill', type=int, default=8000) # <0 means following default settings
 parser.add_argument('--timelimit', type=int, default=-1) # <0 means consistent with config file
+parser.add_argument('--logdir', type=str, default="'./data/suture/needle_picking'")
 
 
 # env related
@@ -44,7 +46,7 @@ section = args.section
 
 
 if not args.only_eval:
-  configs = yaml.safe_load((pathlib.Path("./examples/jsons/default_np.yaml")).read_text())
+  configs = yaml.safe_load((pathlib.Path(args.default_json)).read_text())
   config = common.Config(configs)
   if args.json !="":
     configs = yaml.safe_load((pathlib.Path(args.json)).read_text())
@@ -57,7 +59,7 @@ if not args.only_eval:
   _env_name = args.robot+"-"+args.platform+"-"+args.arm+"-"+ args.preprocess_type+"-"+args.image_type+"-prefill"+str(args.prefill)+"-clutch"+str(args.clutch) 
 
 
-  logdir = str(Path('./data/suture/needle_picking') / _env_name / baseline / str(section) )
+  logdir = str(Path(args.logdir) / _env_name / baseline / str(section) )
   config = config.update({
     'bc_dir': logdir + '/train_episodes/oracle',
     'logdir': logdir,         
@@ -72,7 +74,7 @@ else:
 
 if args.preprocess_type == "segment_net":
   assert args.segment_net_file!="none", "please specify a weight file for segmentation net"
-env = make_env(
+env = GymSutureEnv(
               robot_type=args.robot,
              platform_type=args.platform, #[cuboid, phantom]
             needle_type=args.needle,
